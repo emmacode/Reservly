@@ -1,0 +1,38 @@
+{
+  "name": "reservly",
+  "version": "1.0.0",
+  "description": "Reservly is an open-source RESTful API built to power restaurant reservation systems with ease and scalability. It provides essential features for managing table bookings, availability, notifications, and real-time updates, all designed to support any restaurant looking to integrate a seamless reservation solution.",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "nodemon src/server.ts",
+    "prod": "NODE_ENV=production nodemon src/server.ts"
+  },
+  "keywords": [],
+  "author": "Moyinoluwa Afolabi & Osho Jahtofunmi",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.8.6",
+    "concurrently": "^9.0.1",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.2",
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "mongoose": "^8.7.2",
+    "morgan": "^1.10.0"
+  }
+}

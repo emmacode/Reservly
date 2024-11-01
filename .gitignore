@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# compiled output
+dist/
+
+# local enviroment
+.env
+
+# logs
+logs/
+*.log
+npm-debug.log*
