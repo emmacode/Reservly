@@ -12,9 +12,12 @@
   "author": "Moyinoluwa Afolabi & Osho Jahtofunmi",
   "license": "ISC",
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.8.6",
+    "@types/validator": "^13.12.2",
     "concurrently": "^9.0.1",
     "eslint": "^8.57.1",
     "eslint-config-airbnb": "^19.0.4",
@@ -30,9 +33,13 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.10.0",
     "mongoose": "^8.7.2",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "validator": "^13.12.0"
   }
 }
