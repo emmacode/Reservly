@@ -1,17 +1,7 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
-
-export interface IUser extends Document {
-  email: string;
-  photo?: String;
-  password: string;
-  confirm_password?: string;
-  role: 'admin' | 'owner';
-  restaurantId?: { type: mongoose.Schema.Types.ObjectId; ref: 'Restaurant' };
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { IUser } from '../types';
 
 const userSchema = new mongoose.Schema<IUser>({
   email: {
@@ -21,23 +11,13 @@ const userSchema = new mongoose.Schema<IUser>({
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email'],
   },
-  //   photo: String,
   password: {
     type: String,
     required: [true, 'Please provide a password'],
     minlength: [8, 'Password must be at least 8 characters'],
     select: false,
   },
-  confirm_password: {
-    type: String,
-    required: [true, 'Please confirm your password'],
-    validate: {
-      validator: function (this: IUser, val: string): boolean {
-        return val === this.password;
-      },
-      message: 'Passwords do not match!',
-    },
-  },
+  //   photo: String,
   role: {
     type: String,
     enum: ['admin', 'owner'],
@@ -45,6 +25,7 @@ const userSchema = new mongoose.Schema<IUser>({
   },
   createdAt: { type: Date, default: Date.now() },
   updatedAt: { type: Date, default: Date.now() },
+  passwordChangedAt: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -52,9 +33,28 @@ userSchema.pre('save', async function (next) {
 
   this.password = await bcrypt.hash(this.password, 12);
 
-  this.confirm_password = undefined;
   next();
 });
+
+userSchema.methods.correctPassword = async function (
+  candidatePassword: string,
+  userPassword: string,
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      (this.passwordChangedAt.getTime() / 1000).toString(),
+      10,
+    );
+
+    return JWTTimestamp < changedTimestamp;
+  }
+
+  return false;
+};
 
 const User = mongoose.model('User', userSchema);
 export default User;

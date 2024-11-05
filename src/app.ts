@@ -3,7 +3,7 @@ import morgan from 'morgan';
 
 import AppError from './utils/app-error';
 import { globalErrorHandler } from './controllers/errorController';
-import accountRouter from './routes/accounts';
+import accountRouter from './routes/accountRoutes';
 
 const app = express();
 
@@ -11,6 +11,9 @@ const app = express();
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+app.use(express.json({ limit: '10kb' }));
+// app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/v1/accounts', accountRouter);
 
