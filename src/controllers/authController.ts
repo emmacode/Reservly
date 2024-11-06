@@ -26,7 +26,6 @@ const createSendToken = (
   res: Response,
 ): void => {
   const token = signToken(user._id as string);
-  console.log(token, 'token');
 
   const cookieOptions: ICookieOptions = {
     expires: new Date(
@@ -57,7 +56,6 @@ export const signup = CatchAsync(
     }
 
     const newUser: IUser = await User.create(req.body);
-    console.log(newUser, 'new user');
 
     createSendToken(newUser, 201, res);
   },
