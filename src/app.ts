@@ -3,7 +3,9 @@ import morgan from 'morgan';
 
 import AppError from './utils/app-error';
 import { globalErrorHandler } from './controllers/errorController';
+// routes
 import accountRouter from './routes/accountRoutes';
+import restaurantRouter from './routes/restaurant.routes';
 
 const app = express();
 
@@ -16,6 +18,7 @@ app.use(express.json({ limit: '10kb' }));
 // app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/v1/accounts', accountRouter);
+app.use('/api/v1/restaurants', restaurantRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

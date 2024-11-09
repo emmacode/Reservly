@@ -84,7 +84,7 @@ export const protect = async (
   res: Response,
   next: NextFunction,
 ) => {
-  let token;
+  let token: string | undefined;
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
