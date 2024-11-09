@@ -6,6 +6,7 @@ import {
   UpdateRestaurantDto,
 } from '../dtos/restaurant.dto';
 import { TypedRequestHandler } from '../types/express';
+import { UserRoles } from '../utils/constants';
 
 export const registerResturant: TypedRequestHandler<
   CreateRestaurantDto
@@ -55,9 +56,6 @@ export const getSingleRestaurant: RequestHandler<{ id: string }> = async (
     }
     res.status(200).json({ status: 'success', data: restaurant });
   } catch (error: any) {
-    if (error.name === 'CastError') {
-      return next(new AppError('Invalid restaurant id', 400));
-    }
     next(error);
   }
 };
@@ -73,13 +71,42 @@ export const updateRestaurant: TypedRequestHandler<
       throw new AppError('Restaurant not found', 404);
     }
 
+    if (
+      restaurant.ownerId.toString() !== req.user?._id?.toString() &&
+      req.user?.role !== UserRoles.Admin
+    ) {
+      throw new AppError('Unauthorized access', 403);
+    }
+
     Object.assign(restaurant, req.body);
     await restaurant.save();
     res.status(200).json({ status: 'success', data: restaurant });
   } catch (error: any) {
-    if (error.name === 'CastError') {
-      return next(new AppError('Invalid restaurant id', 400));
+    next(error);
+  }
+};
+
+export const deleteRestaurant: RequestHandler<{ id: string }> = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id);
+    if (!restaurant) {
+      throw new AppError('Restaurant not found', 404);
     }
+
+    if (
+      restaurant.ownerId.toString() !== req.user?._id?.toString() &&
+      req.user?.role !== UserRoles.Admin
+    ) {
+      throw new AppError('Unauthorized access', 403);
+    }
+
+    await Restaurant.deleteOne({ _id: req.params.id });
+    res.status(204).json({ status: 'success', data: null });
+  } catch (error: any) {
     next(error);
   }
 };

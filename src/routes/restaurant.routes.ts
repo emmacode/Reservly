@@ -5,6 +5,7 @@ import {
   UpdateRestaurantDto,
 } from '../dtos/restaurant.dto';
 import {
+  deleteRestaurant,
   getRestaurants,
   getSingleRestaurant,
   registerResturant,
@@ -33,5 +34,8 @@ router.patch(
   validateData(UpdateRestaurantDto),
   updateRestaurant,
 );
+
+// delete routes
+router.delete('/:id', protect, deleteRestaurant);
 
 export default router;
