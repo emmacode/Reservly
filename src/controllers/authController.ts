@@ -6,6 +6,8 @@ import User from '../models/userModel';
 import { IUser } from '../types';
 import CatchAsync from '../utils/catchAsync';
 import AppError from '../utils/app-error';
+import { promisify } from 'util';
+import { sendEmail } from '../utils/email';
 
 interface ICookieOptions {
   expires: Date;
@@ -14,6 +16,12 @@ interface ICookieOptions {
 }
 
 type RolesProps = string[];
+
+type IDecoded = {
+  id: string;
+  iat: number;
+  exp: number;
+};
 
 const signToken = (id: string) =>
   jwt.sign({ id }, process.env.JWT_SECRET as string, {
@@ -104,11 +112,11 @@ export const protect = async (
       process.env.JWT_SECRET as string,
       (err, payload) => {
         if (err) {
-          reject(err);
+          return next(err);
         } else if (payload) {
           resolve(payload as JwtPayload);
         } else {
-          reject(new Error('Invalid token payload'));
+          return next(new AppError('Invalid token payload', 401));
         }
       },
     ),
@@ -144,8 +152,48 @@ export const restrictTo =
     next();
   };
 
+export const forgotPassword = CatchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return next(new AppError('There is no user with that email address', 401));
+  }
+
+  // Generate random token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // send to email
+  const resetURL = `${req.protocol}://${req.get('host')}/api/v1/accounts/reset-password/${resetToken}}`;
+
+  const message = `Forgot your password? Submit a PATCH request with your new password and confirm password to ${resetURL}.\nIf you didn't forget your password, please ignore this email.`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Password reset token valid for 10 minutes',
+      message,
+    });
+
+    res
+      .status(200)
+      .json({ status: 'success', message: 'Password reset token sent!' });
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError('There was an error sending the email, try again!', 500),
+    );
+  }
+});
+
+export const resetPassword = CatchAsync(async (req, res, next) => {});
+
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: IUser; // Add `user` property of type `IUser`
+    user?: IUser;
   }
 }

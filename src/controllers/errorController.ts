@@ -44,13 +44,11 @@ const handleValidationErrorDB = (err: OperationErrorProps) => {
   return new AppError(message, 400);
 };
 
-const handleJWTError = () => {
-  return new AppError('Invalid token. Please log in again!', 401);
-};
+const handleJWTError = () =>
+  new AppError('Invalid token. Please log in again!', 401);
 
-const handleJWTExpiredError = () => {
-  return new AppError('Your token as expired! Please log in again', 401);
-};
+const handleJWTExpiredError = () =>
+  new AppError('Your token as expired! Please log in again', 401);
 
 // Development env error handler
 const sendErrorDev = (err: OperationErrorProps, res: Response) => {
@@ -63,12 +61,11 @@ const sendErrorDev = (err: OperationErrorProps, res: Response) => {
 };
 
 // Production env error handle
-
 const sendErrorProd = (err: OperationErrorProps, res: Response) => {
   if (err.operational) {
     res.status(err.statusCode as number).json({
       status: err.status,
-      message: err.message,
+      message: err.message
     });
   } else {
     res.status(500).json({

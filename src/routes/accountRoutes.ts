@@ -1,11 +1,20 @@
 import express from 'express';
-import { login, protect, signup } from '../controllers/authController';
+import {
+  forgotPassword,
+  login,
+  protect,
+  resetPassword,
+  signup,
+} from '../controllers/authController';
 import { getAllUsers } from '../controllers/userContoller';
 
 const accountRouter = express.Router();
 
 accountRouter.post('/signup', signup);
 accountRouter.post('/login', login);
+
+accountRouter.post('/forgot-password', forgotPassword);
+accountRouter.post('/reset-password', resetPassword);
 
 accountRouter.get('/', protect, getAllUsers);
 
