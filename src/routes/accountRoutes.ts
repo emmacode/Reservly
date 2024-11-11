@@ -14,7 +14,7 @@ accountRouter.post('/signup', signup);
 accountRouter.post('/login', login);
 
 accountRouter.post('/forgot-password', forgotPassword);
-accountRouter.post('/reset-password', resetPassword);
+accountRouter.patch('/reset-password/:token', resetPassword);
 
 accountRouter.get('/', protect, getAllUsers);
 

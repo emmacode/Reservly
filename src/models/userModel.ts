@@ -40,6 +40,15 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // saving to the DB can be slower than issuing JWT
+  // making changedPasswordAfter is set after the the JWT has been created so user will not be able to login with the new JWT
+  this.passwordChangedAt = new Date(Date.now() - 1000);
+  next();
+});
+
 userSchema.methods.correctPassword = async function (
   candidatePassword: string,
   userPassword: string,
@@ -63,6 +72,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
+  // The hashed token is assigned to passwordResetToken and stored in the DB
   this.passwordResetToken = crypto
     .createHash('sha256')
     .update(resetToken)

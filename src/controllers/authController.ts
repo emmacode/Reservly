@@ -17,12 +17,6 @@ interface ICookieOptions {
 
 type RolesProps = string[];
 
-type IDecoded = {
-  id: string;
-  iat: number;
-  exp: number;
-};
-
 const signToken = (id: string) =>
   jwt.sign({ id }, process.env.JWT_SECRET as string, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -190,7 +184,33 @@ export const forgotPassword = CatchAsync(async (req, res, next) => {
   }
 });
 
-export const resetPassword = CatchAsync(async (req, res, next) => {});
+export const resetPassword = CatchAsync(async (req, res, next) => {
+  // The token from the req is then hashed and we get the user belonging to that token in the DB
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() }, // checks if the expiry time is greater than right now
+  });
+
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired!', 400));
+  }
+
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new AppError('Passwords do not match!', 400));
+  }
+
+  user.password = req.body.password;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  createSendToken(user, 200, res);
+});
 
 declare module 'express-serve-static-core' {
   interface Request {
