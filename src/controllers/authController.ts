@@ -104,11 +104,11 @@ export const protect = async (
       process.env.JWT_SECRET as string,
       (err, payload) => {
         if (err) {
-          reject(err);
+          return next(err);
         } else if (payload) {
           resolve(payload as JwtPayload);
         } else {
-          reject(new Error('Invalid token payload'));
+          return next(new AppError('Invalid token payload', 401));
         }
       },
     ),
