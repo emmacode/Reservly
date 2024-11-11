@@ -5,6 +5,7 @@ import {
   protect,
   resetPassword,
   signup,
+  updatePassword,
 } from '../controllers/authController';
 import { getAllUsers } from '../controllers/userContoller';
 
@@ -15,6 +16,7 @@ accountRouter.post('/login', login);
 
 accountRouter.post('/forgot-password', forgotPassword);
 accountRouter.patch('/reset-password/:token', resetPassword);
+accountRouter.patch('/update-password', protect, updatePassword);
 
 accountRouter.get('/', protect, getAllUsers);
 

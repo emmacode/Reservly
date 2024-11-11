@@ -6,7 +6,6 @@ import User from '../models/userModel';
 import { IUser } from '../types';
 import CatchAsync from '../utils/catchAsync';
 import AppError from '../utils/app-error';
-import { promisify } from 'util';
 import { sendEmail } from '../utils/email';
 
 interface ICookieOptions {
@@ -52,7 +51,7 @@ const createSendToken = (
 };
 
 export const signup = CatchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req, res, next) => {
     if (req.body.password !== req.body.confirmPassword) {
       return next(new AppError('Passwords do not match!', 400));
     }
@@ -64,7 +63,7 @@ export const signup = CatchAsync(
 );
 
 export const login = CatchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -207,6 +206,27 @@ export const resetPassword = CatchAsync(async (req, res, next) => {
   user.password = req.body.password;
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
+  await user.save();
+
+  createSendToken(user, 200, res);
+});
+
+export const updatePassword = CatchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user?.id).select('+password');
+
+  if (!user) {
+    return next(new AppError('User not found!', 404));
+  }
+
+  if (!(await user.correctPassword(req.body.currentPassword, user.password))) {
+    return next(new AppError('Your current password is wrong!', 401));
+  }
+
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new AppError('Password does not match', 400));
+  }
+
+  user.password = req.body.password;
   await user.save();
 
   createSendToken(user, 200, res);
