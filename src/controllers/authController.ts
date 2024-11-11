@@ -90,6 +90,12 @@ export const protect = async (
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.headers.cookie) {
+    const cookieString = req.headers.cookie;
+    const jwtMatch = cookieString.match(/jwt=([^;]+)/);
+    if (jwtMatch) {
+      token = jwtMatch[1];
+    }
   }
 
   if (!token) {
