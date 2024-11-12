@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+
 import { IUser } from '../types';
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -26,6 +28,8 @@ const userSchema = new mongoose.Schema<IUser>({
   createdAt: { type: Date, default: Date.now() },
   updatedAt: { type: Date, default: Date.now() },
   passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -33,6 +37,15 @@ userSchema.pre('save', async function (next) {
 
   this.password = await bcrypt.hash(this.password, 12);
 
+  next();
+});
+
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // saving to the DB can be slower than issuing JWT
+  // making changedPasswordAfter is set after the the JWT has been created so user will not be able to login with the new JWT
+  this.passwordChangedAt = new Date(Date.now() - 1000);
   next();
 });
 
@@ -54,6 +67,20 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
   }
 
   return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // The hashed token is assigned to passwordResetToken and stored in the DB
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // Expires in 10mins
+
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);

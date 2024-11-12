@@ -6,6 +6,7 @@ import User from '../models/userModel';
 import { IUser } from '../types';
 import CatchAsync from '../utils/catchAsync';
 import AppError from '../utils/app-error';
+import { sendEmail } from '../utils/email';
 
 interface ICookieOptions {
   expires: Date;
@@ -50,7 +51,7 @@ const createSendToken = (
 };
 
 export const signup = CatchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req, res, next) => {
     if (req.body.password !== req.body.confirmPassword) {
       return next(new AppError('Passwords do not match!', 400));
     }
@@ -62,7 +63,7 @@ export const signup = CatchAsync(
 );
 
 export const login = CatchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -144,8 +145,95 @@ export const restrictTo =
     next();
   };
 
+export const forgotPassword = CatchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return next(new AppError('There is no user with that email address', 401));
+  }
+
+  // Generate random token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // send to email
+  const resetURL = `${req.protocol}://${req.get('host')}/api/v1/accounts/reset-password/${resetToken}}`;
+
+  const message = `Forgot your password? Submit a PATCH request with your new password and confirm password to ${resetURL}.\nIf you didn't forget your password, please ignore this email.`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Password reset token valid for 10 minutes',
+      message,
+    });
+
+    res
+      .status(200)
+      .json({ status: 'success', message: 'Password reset token sent!' });
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError('There was an error sending the email, try again!', 500),
+    );
+  }
+});
+
+export const resetPassword = CatchAsync(async (req, res, next) => {
+  // The token from the req is then hashed and we get the user belonging to that token in the DB
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() }, // checks if the expiry time is greater than right now
+  });
+
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired!', 400));
+  }
+
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new AppError('Passwords do not match!', 400));
+  }
+
+  user.password = req.body.password;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  createSendToken(user, 200, res);
+});
+
+export const updatePassword = CatchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user?.id).select('+password');
+
+  if (!user) {
+    return next(new AppError('User not found!', 404));
+  }
+
+  if (!(await user.correctPassword(req.body.currentPassword, user.password))) {
+    return next(new AppError('Your current password is wrong!', 401));
+  }
+
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new AppError('Password does not match', 400));
+  }
+
+  user.password = req.body.password;
+  await user.save();
+
+  createSendToken(user, 200, res);
+});
+
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: IUser; // Add `user` property of type `IUser`
+    user?: IUser;
   }
 }
