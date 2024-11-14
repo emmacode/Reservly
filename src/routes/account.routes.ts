@@ -6,12 +6,12 @@ import {
   resetPassword,
   signup,
   updatePassword,
-} from '../controllers/authController';
+} from '../controllers/auth.controller';
 import {
   deleteAccount,
   getAllUsers,
   updateAccount,
-} from '../controllers/userContoller';
+} from '../controllers/user.contoller';
 
 const accountRouter = express.Router();
 

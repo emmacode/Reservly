@@ -11,7 +11,7 @@ import {
   registerResturant,
   updateRestaurant,
 } from '../controllers/restaurant.controller';
-import { protect } from '../controllers/authController';
+import { protect } from '../controllers/auth.controller';
 
 const router = express.Router();
 
