@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Query } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -51,6 +51,11 @@ userSchema.pre('save', function (next) {
   // saving to the DB can be slower than issuing JWT
   // making changedPasswordAfter is set after the the JWT has been created so user will not be able to login with the new JWT
   this.passwordChangedAt = new Date(Date.now() - 1000);
+  next();
+});
+
+userSchema.pre(/^find/, function (this: Query<any, any>, next) {
+  this.find({ active: { $ne: false } }); // this filters out account that have active set to false
   next();
 });
 

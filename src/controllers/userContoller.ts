@@ -3,6 +3,7 @@ import User from '../models/userModel';
 import AppError from '../utils/app-error';
 import CatchAsync from '../utils/catchAsync';
 import { IUser } from '../types';
+import { UserRoles } from '../utils/constants';
 
 const filterObj = (obj: Record<string, any>, ...allowedFields: string[]) => {
   const newObj: Record<string, any> = {};
@@ -50,8 +51,11 @@ export const updateAccount = async (
 
 export const deleteAccount = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    await User.findByIdAndUpdate(req.user?.id, { active: false });
+    if (req.user?.role !== UserRoles.Owner) {
+      return next(new AppError('Unauthorized access', 403));
+    }
 
+    await User.deleteOne({_id: req.user?.id});
     res.status(204).json({ status: 'success', data: null });
   },
 );
