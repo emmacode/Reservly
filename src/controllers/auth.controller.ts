@@ -2,9 +2,9 @@ import crypto from 'crypto';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { NextFunction, Response, Request } from 'express';
 
-import User from '../models/userModel';
+import User from '../models/User';
 import { IUser } from '../types';
-import CatchAsync from '../utils/catchAsync';
+import CatchAsync from '../utils/catch-async';
 import AppError from '../utils/app-error';
 import { sendEmail } from '../utils/email';
 

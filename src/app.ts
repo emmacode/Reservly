@@ -2,9 +2,9 @@ import express from 'express';
 import morgan from 'morgan';
 
 import AppError from './utils/app-error';
-import { globalErrorHandler } from './controllers/errorController';
+import { globalErrorHandler } from './controllers/error.controller';
 // routes
-import accountRouter from './routes/accountRoutes';
+import accountRouter from './routes/account.routes';
 import restaurantRouter from './routes/restaurant.routes';
 
 const app = express();

@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import User from '../models/userModel';
+import User from '../models/User';
 import AppError from '../utils/app-error';
-import CatchAsync from '../utils/catchAsync';
-import { IUser } from '../types';
+import CatchAsync from '../utils/catch-async';
 import { UserRoles } from '../utils/constants';
 
 const filterObj = (obj: Record<string, any>, ...allowedFields: string[]) => {
