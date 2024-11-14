@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Query } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema<IUser>({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  //   active: {
+  //     type: Boolean,
+  //     default: true,
+  //     select: false,
+  //   },
 });
 
 userSchema.pre('save', async function (next) {
@@ -48,6 +53,11 @@ userSchema.pre('save', function (next) {
   this.passwordChangedAt = new Date(Date.now() - 1000);
   next();
 });
+
+// userSchema.pre(/^find/, function (this: Query<any, any>, next) {
+//   this.find({ active: { $ne: false } }); // this filters out account that have active set to false
+//   next();
+// });
 
 userSchema.methods.correctPassword = async function (
   candidatePassword: string,

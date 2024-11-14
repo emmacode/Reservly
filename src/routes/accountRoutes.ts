@@ -7,7 +7,11 @@ import {
   signup,
   updatePassword,
 } from '../controllers/authController';
-import { getAllUsers } from '../controllers/userContoller';
+import {
+  deleteAccount,
+  getAllUsers,
+  updateAccount,
+} from '../controllers/userContoller';
 
 const accountRouter = express.Router();
 
@@ -17,6 +21,8 @@ accountRouter.post('/login', login);
 accountRouter.post('/forgot-password', forgotPassword);
 accountRouter.patch('/reset-password/:token', resetPassword);
 accountRouter.patch('/update-password', protect, updatePassword);
+accountRouter.patch('/update-account', protect, updateAccount);
+accountRouter.delete('/delete-account', protect, deleteAccount);
 
 accountRouter.get('/', protect, getAllUsers);
 
