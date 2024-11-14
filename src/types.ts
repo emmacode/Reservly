@@ -17,4 +17,5 @@ export interface IUser extends Document {
   passwordResetExpires?: Date;
   changedPasswordAfter(arg: number): boolean;
   createPasswordResetToken: () => string;
+  active: boolean;
 }
