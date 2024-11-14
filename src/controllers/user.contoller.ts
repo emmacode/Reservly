@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
-import User from '../models/User';
+import mongoose from 'mongoose';
+
 import AppError from '../utils/app-error';
 import CatchAsync from '../utils/catch-async';
+import Restaurant from '../models/Restaurant';
+import User from '../models/User';
 import { UserRoles } from '../utils/constants';
 
 const filterObj = (obj: Record<string, any>, ...allowedFields: string[]) => {
@@ -54,7 +57,15 @@ export const deleteAccount = CatchAsync(
       return next(new AppError('Unauthorized access', 403));
     }
 
-    await User.deleteOne({_id: req.user?.id});
-    res.status(204).json({ status: 'success', data: null });
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        await User.deleteOne({ _id: req.user?.id }).session(session);
+        await Restaurant.deleteMany({ ownerId: req.user?.id }).session(session);
+      });
+      res.status(204).json({ status: 'success', data: null });
+    } finally {
+      await session.endSession();
+    }
   },
 );
