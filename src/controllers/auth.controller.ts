@@ -50,35 +50,31 @@ const createSendToken = (
   });
 };
 
-export const signup = CatchAsync(
-  async (req, res, next) => {
-    if (req.body.password !== req.body.confirmPassword) {
-      return next(new AppError('Passwords do not match!', 400));
-    }
+export const signup = CatchAsync(async (req, res, next) => {
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new AppError('Passwords do not match!', 400));
+  }
 
-    const newUser: IUser = await User.create(req.body);
+  const newUser: IUser = await User.create(req.body);
 
-    createSendToken(newUser, 201, res);
-  },
-);
+  createSendToken(newUser, 201, res);
+});
 
-export const login = CatchAsync(
-  async (req, res, next) => {
-    const { email, password } = req.body;
+export const login = CatchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      return next(new AppError('Please provide email and password', 400));
-    }
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
 
-    const user = (await User.findOne({ email }).select('+password')) as IUser;
+  const user = (await User.findOne({ email }).select('+password')) as IUser;
 
-    if (!user || !(await user.correctPassword(password, user.password))) {
-      return next(new AppError('Incorrect email or password', 401));
-    }
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
 
-    createSendToken(user, 200, res);
-  },
-);
+  createSendToken(user, 200, res);
+});
 
 export const protect = async (
   req: Request,
@@ -237,6 +233,31 @@ export const updatePassword = CatchAsync(async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
+
+export const verifyEmail = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return next(new AppError('Token is invalid or has expired!', 400));
+    }
+
+    user.verified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save();
+
+    createSendToken(user, 200, res);
+  },
+);
 
 declare module 'express-serve-static-core' {
   interface Request {

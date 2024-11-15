@@ -6,6 +6,7 @@ import {
   resetPassword,
   signup,
   updatePassword,
+  verifyEmail,
 } from '../controllers/auth.controller';
 import {
   deleteAccount,
@@ -20,6 +21,7 @@ accountRouter.post('/login', login);
 
 accountRouter.post('/forgot-password', forgotPassword);
 accountRouter.patch('/reset-password/:token', resetPassword);
+accountRouter.get('/verify-email/:token', verifyEmail);
 accountRouter.patch('/update-password', protect, updatePassword);
 accountRouter.patch('/update-account', protect, updateAccount);
 accountRouter.delete('/delete-account', protect, deleteAccount);

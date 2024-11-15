@@ -1,11 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 import AppError from '../utils/app-error';
 import CatchAsync from '../utils/catch-async';
 import Restaurant from '../models/Restaurant';
 import User from '../models/User';
 import { UserRoles } from '../utils/constants';
+import { sendEmail } from '../utils/email';
 
 const filterObj = (obj: Record<string, any>, ...allowedFields: string[]) => {
   const newObj: Record<string, any> = {};
@@ -43,12 +45,60 @@ export const updateAccount = async (
 
   const filteredBody = filterObj(req.body, 'name', 'email');
 
-  const updatedUser = await User.findByIdAndUpdate(req.user?.id, filteredBody, {
-    new: true,
-    runValidators: true,
-  });
+  try {
+    if (filteredBody.email) {
+      const verificationToken = crypto.randomBytes(32).toString('hex');
 
-  res.status(200).json({ status: 'success', data: { user: updatedUser } });
+      const hashedToken = crypto
+        .createHash('sha256')
+        .update(verificationToken)
+        .digest('hex');
+
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user?.id,
+        {
+          ...filteredBody,
+          verified: false,
+          emailVerificationToken: hashedToken,
+          emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      const verifyEmailURL = `${req.protocol}://${req.get('host')}/api/v1/accounts/verify-email/${verificationToken}}`;
+      const message = `Someone (hopefully you) has updated your account with this email. Please click the link below to verify your ownership of this email. ${verifyEmailURL}`;
+
+      await sendEmail({
+        email: filteredBody.email,
+        subject: 'Please Confirm Your Email Address',
+        message,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: {
+          user: updatedUser,
+          message: 'Verification email sent to your new email address',
+        },
+      });
+    } else {
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user?.id,
+        filteredBody,
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      res.status(200).json({ status: 'success', data: { user: updatedUser } });
+    }
+  } catch (err) {
+    return next(new AppError('Error updating account', 500));
+  }
 };
 
 export const deleteAccount = CatchAsync(

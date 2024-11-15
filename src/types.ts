@@ -17,5 +17,8 @@ export interface IUser extends Document {
   passwordResetExpires?: Date;
   changedPasswordAfter(arg: number): boolean;
   createPasswordResetToken: () => string;
-  active: boolean;
+  //   active: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  verified: boolean;
 }

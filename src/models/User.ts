@@ -35,6 +35,12 @@ const userSchema = new mongoose.Schema<IUser>({
   //     default: true,
   //     select: false,
   //   },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
+  verified: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 userSchema.pre('save', async function (next) {
