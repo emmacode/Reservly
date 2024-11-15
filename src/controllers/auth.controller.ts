@@ -245,6 +245,7 @@ export const verifyEmail = CatchAsync(
       emailVerificationToken: hashedToken,
       emailVerificationExpires: { $gt: Date.now() },
     });
+    console.log(user, 'verify');
 
     if (!user) {
       return next(new AppError('Token is invalid or has expired!', 400));

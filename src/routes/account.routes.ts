@@ -21,9 +21,10 @@ accountRouter.post('/login', login);
 
 accountRouter.post('/forgot-password', forgotPassword);
 accountRouter.patch('/reset-password/:token', resetPassword);
-accountRouter.get('/verify-email/:token', verifyEmail);
 accountRouter.patch('/update-password', protect, updatePassword);
+
 accountRouter.patch('/update-account', protect, updateAccount);
+accountRouter.patch('/verify-email/:token', verifyEmail);
 accountRouter.delete('/delete-account', protect, deleteAccount);
 
 accountRouter.get('/', protect, getAllUsers);
