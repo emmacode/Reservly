@@ -1,4 +1,11 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsArray,
+  IsEmail,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateRestaurantDto {
   @IsString()
@@ -20,4 +27,25 @@ export class UpdateRestaurantDto {
   @IsOptional()
   @IsString()
   address?: string;
+}
+
+export class AddTableDto {
+  @IsString()
+  tableNumber!: string;
+
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  capacity!: number;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  adjacentTables?: string[];
 }

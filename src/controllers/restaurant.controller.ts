@@ -1,7 +1,12 @@
 import { RequestHandler } from 'express';
-import Restaurant from '../models/Restaurant';
+import mongoose from 'mongoose';
+
 import AppError from '../utils/app-error';
+import CatchAsync from '../utils/catch-async';
+import Restaurant from '../models/Restaurant';
+import Table from '../models/Table';
 import {
+  AddTableDto,
   CreateRestaurantDto,
   UpdateRestaurantDto,
 } from '../dtos/restaurant.dto';
@@ -44,13 +49,11 @@ export const getRestaurants: TypedRequestHandler = async (req, res, next) => {
   }
 };
 
-export const getSingleRestaurant: RequestHandler<{ id: string }> = async (
-  req,
-  res,
-  next,
-) => {
+export const getSingleRestaurant: RequestHandler<{
+  restaurantId: string;
+}> = async (req, res, next) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id);
+    const restaurant = await Restaurant.findById(req.params.restaurantId);
     if (!restaurant) {
       throw new AppError('Restaurant not found', 404);
     }
@@ -63,10 +66,10 @@ export const getSingleRestaurant: RequestHandler<{ id: string }> = async (
 export const updateRestaurant: TypedRequestHandler<
   UpdateRestaurantDto,
   any,
-  { id: string }
+  { restaurantId: string }
 > = async (req, res, next) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id);
+    const restaurant = await Restaurant.findById(req.params.restaurantId);
     if (!restaurant) {
       throw new AppError('Restaurant not found', 404);
     }
@@ -86,13 +89,11 @@ export const updateRestaurant: TypedRequestHandler<
   }
 };
 
-export const deleteRestaurant: RequestHandler<{ id: string }> = async (
-  req,
-  res,
-  next,
-) => {
+export const deleteRestaurant: RequestHandler<{
+  restaurantId: string;
+}> = async (req, res, next) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id);
+    const restaurant = await Restaurant.findById(req.params.restaurantId);
     if (!restaurant) {
       throw new AppError('Restaurant not found', 404);
     }
@@ -104,9 +105,75 @@ export const deleteRestaurant: RequestHandler<{ id: string }> = async (
       throw new AppError('Unauthorized access', 403);
     }
 
-    await Restaurant.deleteOne({ _id: req.params.id });
+    await Restaurant.deleteOne({ _id: req.params.restaurantId });
     res.status(204).json({ status: 'success', data: null });
   } catch (error: any) {
     next(error);
   }
 };
+
+export const addTable: TypedRequestHandler<
+  AddTableDto,
+  any,
+  { restaurantId: string }
+> = CatchAsync(async (req, res, next) => {
+  const { restaurantId } = req.params;
+  const { tableNumber, capacity, location, description, adjacentTables } =
+    req.body;
+
+  const restaurant = await Restaurant.findById(restaurantId);
+  if (!restaurant) {
+    throw new AppError('Restaurant not found', 404);
+  }
+
+  if (
+    restaurant.ownerId.toString() !== req.user?._id?.toString() &&
+    req.user?.role !== UserRoles.Admin
+  ) {
+    throw new AppError('Unauthorized access', 403);
+  }
+
+  let table = await Table.findOne({ restaurantId, tableNumber });
+
+  if (table) {
+    throw new AppError('Table already exists', 400);
+  }
+
+  table = new Table({
+    restaurantId,
+    tableNumber,
+    capacity,
+    location,
+    description,
+    adjacentTables,
+  });
+
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      if (adjacentTables && adjacentTables.length > 0) {
+        const tables = await Table.find({
+          restaurantId,
+          tableNumber: { $in: adjacentTables },
+        });
+
+        if (tables.length !== adjacentTables.length) {
+          throw new AppError('Invalid adjacent tables', 400);
+        }
+
+        await Table.updateMany(
+          { restaurantId, tableNumber: { $in: adjacentTables } },
+          { $push: { adjacentTables: tableNumber } },
+          { session },
+        );
+      }
+
+      await table?.save({ session });
+    });
+
+    res.status(201).json({ status: 'success', data: table });
+  } finally {
+    await session.endSession();
+  }
+});
