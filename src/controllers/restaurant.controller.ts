@@ -177,3 +177,26 @@ export const addTable: TypedRequestHandler<
     await session.endSession();
   }
 });
+
+export const getTables: RequestHandler<{
+  restaurantId: string;
+}> = CatchAsync(async (req, res, next) => {
+  const tables = await Table.find({ restaurantId: req.params.restaurantId });
+  res.status(200).json({ status: 'success', data: tables });
+});
+
+export const getSingleTable: RequestHandler<{
+  restaurantId: string;
+  tableId: string;
+}> = CatchAsync(async (req, res, next) => {
+  const table = await Table.findOne({
+    restaurantId: req.params.restaurantId,
+    _id: req.params.tableId,
+  });
+
+  if (!table) {
+    throw new AppError('Table not found', 404);
+  }
+
+  res.status(200).json({ status: 'success', data: table });
+});

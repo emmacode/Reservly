@@ -10,6 +10,8 @@ import {
   deleteRestaurant,
   getRestaurants,
   getSingleRestaurant,
+  getSingleTable,
+  getTables,
   registerResturant,
   updateRestaurant,
 } from '../controllers/restaurant.controller';
@@ -20,6 +22,8 @@ const router = express.Router();
 // get routes
 router.get('/', getRestaurants);
 router.get('/:restaurantId', getSingleRestaurant);
+router.get('/:restaurantId/tables', getTables);
+router.get('/:restaurantId/tables/:tableId', getSingleTable);
 
 // post routes
 router.post(
@@ -29,7 +33,7 @@ router.post(
   registerResturant,
 );
 router.post(
-  '/:restaurantId/add-table',
+  '/:restaurantId/tables',
   validateData(AddTableDto),
   protect,
   addTable,
