@@ -32,7 +32,7 @@ const createSendToken = (
 
   const cookieOptions: ICookieOptions = {
     expires: new Date(
-      Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN) * 30 * 60 * 1000,
+      Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN) * 60 * 1000,
     ),
     httpOnly: true,
   };
