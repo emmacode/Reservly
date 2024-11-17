@@ -24,7 +24,7 @@ accountRouter.patch('/reset-password/:token', resetPassword);
 accountRouter.patch('/update-password', protect, updatePassword);
 
 accountRouter.patch('/update-account', protect, updateAccount);
-accountRouter.patch('/verify-email/:token', verifyEmail);
+accountRouter.patch('/verify-email/:emailToken', verifyEmail);
 accountRouter.delete('/delete-account', protect, deleteAccount);
 
 accountRouter.get('/', protect, getAllUsers);

@@ -238,14 +238,13 @@ export const verifyEmail = CatchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const hashedToken = crypto
       .createHash('sha256')
-      .update(req.params.token)
+      .update(req.params.emailToken)
       .digest('hex');
 
     const user = await User.findOne({
       emailVerificationToken: hashedToken,
       emailVerificationExpires: { $gt: Date.now() },
     });
-    console.log(user, 'verify');
 
     if (!user) {
       return next(new AppError('Token is invalid or has expired!', 400));
