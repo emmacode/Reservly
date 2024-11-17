@@ -1,13 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
-import crypto from 'crypto';
 
 import AppError from '../utils/app-error';
 import CatchAsync from '../utils/catch-async';
 import Restaurant from '../models/Restaurant';
 import User from '../models/User';
 import { UserRoles } from '../utils/constants';
-import { sendEmail } from '../utils/email';
+import { generateToken } from '../utils/generate.token';
+import { sendVerificationEmail } from '../utils/verification.email';
 
 const filterObj = (obj: Record<string, any>, ...allowedFields: string[]) => {
   const newObj: Record<string, any> = {};
@@ -47,12 +47,7 @@ export const updateAccount = async (
 
   try {
     if (filteredBody.email) {
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-
-      const hashedToken = crypto
-        .createHash('sha256')
-        .update(verificationToken)
-        .digest('hex');
+      const { token, hashedToken } = generateToken();
 
       const updatedUser = await User.findByIdAndUpdate(
         req.user?.id,
@@ -68,20 +63,20 @@ export const updateAccount = async (
         },
       );
 
-      const verifyEmailURL = `${req.protocol}://${req.get('host')}/api/v1/accounts/verify-email/${verificationToken}}`;
-      const message = `Someone (hopefully you) has updated your account with this email. Please click the link below to verify your ownership of this email. ${verifyEmailURL}`;
-
-      await sendEmail({
+      await sendVerificationEmail({
         email: filteredBody.email,
         subject: 'Please Confirm Your Email Address',
-        message,
+        message:
+          'Someone (hopefully you) has updated your account with this email. Please click the link below to verify your ownership of this email.',
+        verificationToken: token,
+        req,
       });
 
       res.status(200).json({
         status: 'success',
         data: {
           user: updatedUser,
-          message: 'Verification email sent to your new email address',
+          message: 'Verification email sent to your new email address.',
         },
       });
     } else {

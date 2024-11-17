@@ -7,6 +7,8 @@ import { IUser } from '../types';
 import CatchAsync from '../utils/catch-async';
 import AppError from '../utils/app-error';
 import { sendEmail } from '../utils/email';
+import { generateToken } from '../utils/generate.token';
+import { sendVerificationEmail } from '../utils/verification.email';
 
 interface ICookieOptions {
   expires: Date;
@@ -55,9 +57,32 @@ export const signup = CatchAsync(async (req, res, next) => {
     return next(new AppError('Passwords do not match!', 400));
   }
 
-  const newUser: IUser = await User.create(req.body);
+  const { token, hashedToken } = generateToken();
 
-  createSendToken(newUser, 201, res);
+  const newUser: IUser = await User.create({
+    ...req.body,
+    emailVerificationToken: hashedToken,
+    emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000,
+  });
+
+  try {
+    await sendVerificationEmail({
+      email: req.body.email,
+      subject: 'Please Verify Your Email Address',
+      message:
+        'Someone (hopefully you) has signed up with this email. Please click the link below to verify your ownership of this email',
+      verificationToken: token,
+      req,
+    });
+
+    createSendToken(newUser, 201, res);
+  } catch (error) {
+    // Delete created user if email sending fails
+    await User.findByIdAndDelete(newUser._id);
+    return next(
+      new AppError('Error sending verification email. Please try again.', 500),
+    );
+  }
 });
 
 export const login = CatchAsync(async (req, res, next) => {
@@ -253,9 +278,11 @@ export const verifyEmail = CatchAsync(
     user.verified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
-    await user.save();
+    await user.save({ validateBeforeSave: false });
 
-    createSendToken(user, 200, res);
+    res
+      .status(200)
+      .json({ status: 'success', message: 'Email verified successfully' });
   },
 );
 

@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import mongoose, { Document } from 'mongoose';
 
 export interface IUser extends Document {
@@ -21,4 +22,12 @@ export interface IUser extends Document {
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
   verified: boolean;
+}
+
+export interface IEmailVerificationOptions {
+  email: string;
+  subject: string;
+  message: string,
+  verificationToken: string;
+  req: Request;
 }
