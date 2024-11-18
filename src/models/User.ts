@@ -1,9 +1,10 @@
 import mongoose, { Query } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import crypto, { hash } from 'crypto';
 
 import { IUser } from '../types';
+import { generateToken } from '../utils/generate.token';
 
 const userSchema = new mongoose.Schema<IUser>({
   email: {
@@ -35,6 +36,12 @@ const userSchema = new mongoose.Schema<IUser>({
   //     default: true,
   //     select: false,
   //   },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
+  verified: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 userSchema.pre('save', async function (next) {
@@ -80,18 +87,23 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
 };
 
 userSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString('hex');
+  const { token, hashedToken } = generateToken();
 
   // The hashed token is assigned to passwordResetToken and stored in the DB
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
+  this.passwordResetToken = hashedToken;
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // Expires in 10mins
 
-  return resetToken;
+  return token;
 };
+
+// userSchema.methods.createEmailVerificationToken = function () {
+//   const { token, hashedToken } = generateToken();
+//   this.emailVerificationToken = hashedToken;
+//   this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+
+//   return token;
+// };
 
 const User = mongoose.model('User', userSchema);
 export default User;

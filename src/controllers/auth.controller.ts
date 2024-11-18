@@ -7,6 +7,8 @@ import { IUser } from '../types';
 import CatchAsync from '../utils/catch-async';
 import AppError from '../utils/app-error';
 import { sendEmail } from '../utils/email';
+import { generateToken } from '../utils/generate.token';
+import { sendVerificationEmail } from '../utils/verification.email';
 
 interface ICookieOptions {
   expires: Date;
@@ -30,7 +32,7 @@ const createSendToken = (
 
   const cookieOptions: ICookieOptions = {
     expires: new Date(
-      Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN) * 30 * 60 * 1000,
+      Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN) * 60 * 1000,
     ),
     httpOnly: true,
   };
@@ -50,35 +52,54 @@ const createSendToken = (
   });
 };
 
-export const signup = CatchAsync(
-  async (req, res, next) => {
-    if (req.body.password !== req.body.confirmPassword) {
-      return next(new AppError('Passwords do not match!', 400));
-    }
+export const signup = CatchAsync(async (req, res, next) => {
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new AppError('Passwords do not match!', 400));
+  }
 
-    const newUser: IUser = await User.create(req.body);
+  const { token, hashedToken } = generateToken();
+
+  const newUser: IUser = await User.create({
+    ...req.body,
+    emailVerificationToken: hashedToken,
+    emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000,
+  });
+
+  try {
+    await sendVerificationEmail({
+      email: req.body.email,
+      subject: 'Please Verify Your Email Address',
+      message:
+        'Someone (hopefully you) has signed up with this email. Please click the link below to verify your ownership of this email',
+      verificationToken: token,
+      req,
+    });
 
     createSendToken(newUser, 201, res);
-  },
-);
+  } catch (error) {
+    // Delete created user if email sending fails
+    await User.findByIdAndDelete(newUser._id);
+    return next(
+      new AppError('Error sending verification email. Please try again.', 500),
+    );
+  }
+});
 
-export const login = CatchAsync(
-  async (req, res, next) => {
-    const { email, password } = req.body;
+export const login = CatchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      return next(new AppError('Please provide email and password', 400));
-    }
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
 
-    const user = (await User.findOne({ email }).select('+password')) as IUser;
+  const user = (await User.findOne({ email }).select('+password')) as IUser;
 
-    if (!user || !(await user.correctPassword(password, user.password))) {
-      return next(new AppError('Incorrect email or password', 401));
-    }
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
 
-    createSendToken(user, 200, res);
-  },
-);
+  createSendToken(user, 200, res);
+});
 
 export const protect = async (
   req: Request,
@@ -237,6 +258,33 @@ export const updatePassword = CatchAsync(async (req, res, next) => {
 
   createSendToken(user, 200, res);
 });
+
+export const verifyEmail = CatchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.emailToken)
+      .digest('hex');
+
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return next(new AppError('Token is invalid or has expired!', 400));
+    }
+
+    user.verified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res
+      .status(200)
+      .json({ status: 'success', message: 'Email verified successfully' });
+  },
+);
 
 declare module 'express-serve-static-core' {
   interface Request {

@@ -6,6 +6,8 @@ import CatchAsync from '../utils/catch-async';
 import Restaurant from '../models/Restaurant';
 import User from '../models/User';
 import { UserRoles } from '../utils/constants';
+import { generateToken } from '../utils/generate.token';
+import { sendVerificationEmail } from '../utils/verification.email';
 
 const filterObj = (obj: Record<string, any>, ...allowedFields: string[]) => {
   const newObj: Record<string, any> = {};
@@ -43,12 +45,55 @@ export const updateAccount = async (
 
   const filteredBody = filterObj(req.body, 'name', 'email');
 
-  const updatedUser = await User.findByIdAndUpdate(req.user?.id, filteredBody, {
-    new: true,
-    runValidators: true,
-  });
+  try {
+    if (filteredBody.email) {
+      const { token, hashedToken } = generateToken();
 
-  res.status(200).json({ status: 'success', data: { user: updatedUser } });
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user?.id,
+        {
+          ...filteredBody,
+          verified: false,
+          emailVerificationToken: hashedToken,
+          emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      await sendVerificationEmail({
+        email: filteredBody.email,
+        subject: 'Please Confirm Your Email Address',
+        message:
+          'Someone (hopefully you) has updated your account with this email. Please click the link below to verify your ownership of this email.',
+        verificationToken: token,
+        req,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: {
+          user: updatedUser,
+          message: 'Verification email sent to your new email address.',
+        },
+      });
+    } else {
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user?.id,
+        filteredBody,
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      res.status(200).json({ status: 'success', data: { user: updatedUser } });
+    }
+  } catch (err) {
+    return next(new AppError('Error updating account', 500));
+  }
 };
 
 export const deleteAccount = CatchAsync(
