@@ -9,6 +9,7 @@ import {
 import {
   addTable,
   deleteRestaurant,
+  deleteTable,
   getRestaurants,
   getSingleRestaurant,
   getSingleTable,
@@ -57,5 +58,6 @@ router.patch(
 
 // delete routes
 router.delete('/:restaurantId', protect, deleteRestaurant);
+router.delete('/:restaurantId/tables/:tableId', protect, deleteTable);
 
 export default router;

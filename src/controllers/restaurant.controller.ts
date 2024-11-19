@@ -292,3 +292,52 @@ export const updateTable: TypedRequestHandler<
     next(error);
   }
 };
+
+export const deleteTable: TypedRequestHandler<
+  any,
+  any,
+  { restaurantId: string; tableId: string }
+> = async (req, res, next) => {
+  try {
+    const { restaurantId, tableId } = req.params;
+
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      throw new AppError('Restaurant not found', 404);
+    }
+
+    if (
+      restaurant.ownerId.toString() !== req.user?._id?.toString() &&
+      req.user?.role !== UserRoles.Admin
+    ) {
+      throw new AppError('Unauthorized access', 403);
+    }
+
+    const existingTable = await Table.findById(tableId);
+    if (!existingTable) {
+      throw new AppError('Table not found', 404);
+    }
+
+    const session = await mongoose.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        // Remove this table's number from all adjacent tables
+        await Table.updateMany(
+          { restaurantId, adjacentTables: existingTable.tableNumber },
+          { $pull: { adjacentTables: existingTable.tableNumber } },
+          { session }
+        );
+
+        // Delete the table
+        await Table.findByIdAndDelete(tableId).session(session);
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    res.status(204).json({ status: 'success', data: null });
+  } catch (error: any) {
+    next(error);
+  }
+};
