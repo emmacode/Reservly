@@ -31,3 +31,21 @@ export interface IEmailVerificationOptions {
   verificationToken: string;
   req: Request;
 }
+
+export interface ITable extends Document {
+  restaurantId: mongoose.Schema.Types.ObjectId;
+  tableNumber: string;
+  capacity: number;
+  location?: string;
+  description?: string;
+  status: TableStatus;
+  adjacentTables?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export enum TableStatus {
+  Available = 'Available',
+  Reserved = 'Reserved',
+  Occupied = 'Occupied',
+}

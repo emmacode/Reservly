@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { TableStatus } from '../types';
 
 const TableSchema = new mongoose.Schema(
   {
@@ -26,8 +27,8 @@ const TableSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Available', 'Reserved', 'Occupied'],
-      default: 'Available',
+      enum: TableStatus,
+      default: TableStatus.Available,
     },
     adjacentTables: [{ type: String }], // An array of table numbers
   },

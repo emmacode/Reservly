@@ -4,6 +4,7 @@ import {
   AddTableDto,
   CreateRestaurantDto,
   UpdateRestaurantDto,
+  UpdateTableDto,
 } from '../dtos/restaurant.dto';
 import {
   addTable,
@@ -14,6 +15,7 @@ import {
   getTables,
   registerResturant,
   updateRestaurant,
+  updateTable,
 } from '../controllers/restaurant.controller';
 import { protect } from '../controllers/auth.controller';
 
@@ -45,6 +47,12 @@ router.patch(
   protect,
   validateData(UpdateRestaurantDto),
   updateRestaurant,
+);
+router.patch(
+  '/:restaurantId/tables/:tableId',
+  protect,
+  validateData(UpdateTableDto),
+  updateTable,
 );
 
 // delete routes
