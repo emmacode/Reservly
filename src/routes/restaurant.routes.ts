@@ -20,6 +20,7 @@ import {
 } from '../controllers/restaurant.controller';
 import { protect } from '../controllers/auth.controller';
 import { CreateReservationDto } from '../dtos/reservation.dto';
+import { checkAvailability } from '../controllers/reservation.controller';
 
 const router = express.Router();
 
@@ -41,6 +42,12 @@ router.post(
   validateData(AddTableDto),
   protect,
   addTable,
+);
+router.post(
+  '/:restaurantId/checkAvailability',
+  protect,
+  validateData(CreateReservationDto),
+  checkAvailability,
 );
 
 // patch routes
