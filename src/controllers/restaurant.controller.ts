@@ -19,7 +19,7 @@ export const registerResturant: TypedRequestHandler<
   CreateRestaurantDto
 > = async (req, res, next) => {
   try {
-    const { name, email, address } = req.body;
+    const { name, email, address, operatingHours } = req.body;
 
     let restaurant = await Restaurant.findOne({
       email,
@@ -29,11 +29,30 @@ export const registerResturant: TypedRequestHandler<
       throw new AppError('Restaurant already exists', 400);
     }
 
+    if (operatingHours) {
+      if (
+        !Array.isArray(req.body.operatingHours) ||
+        req.body.operatingHours.length === 0
+      ) {
+        return next(new AppError('Operating Hours cannot be empty', 400));
+      }
+      
+      const days = operatingHours.map((hour) => hour.day);
+      const uniqueDays = new Set(days);
+      if (uniqueDays.size !== days.length) {
+        throw new AppError(
+          'Duplicate days in operating hours are not allowed',
+          400,
+        );
+      }
+    }
+
     restaurant = new Restaurant({
       name,
       email,
       address,
       ownerId: req.user?.id,
+      operatingHours: operatingHours,
     });
     await restaurant.save();
     res.status(201).json({ status: 'success', data: restaurant });
@@ -68,24 +87,48 @@ export const getSingleRestaurant: RequestHandler<{
 export const updateRestaurant: TypedRequestHandler<
   UpdateRestaurantDto,
   any,
-  { restaurantId: string }
-> = CatchAsync(async (req, res, next) => {
-  const restaurant = await Restaurant.findById(req.params.restaurantId);
-  if (!restaurant) {
-    throw new AppError('Restaurant not found', 404);
-  }
+  { id: string }
+> = async (req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id);
+    if (!restaurant) {
+      throw new AppError('Restaurant not found', 404);
+    }
 
-  if (
-    restaurant.ownerId.toString() !== req.user?._id?.toString() &&
-    req.user?.role !== UserRoles.Admin
-  ) {
-    throw new AppError('Unauthorized access', 403);
-  }
+    if (
+      restaurant.ownerId.toString() !== req.user?._id?.toString() &&
+      req.user?.role !== UserRoles.Admin
+    ) {
+      throw new AppError('Unauthorized access', 403);
+    }
 
-  Object.assign(restaurant, req.body);
-  await restaurant.save();
-  res.status(200).json({ status: 'success', data: restaurant });
-});
+    if (req.body.operatingHours) {
+      if (
+        !Array.isArray(req.body.operatingHours) ||
+        req.body.operatingHours.length === 0
+      ) {
+        return next(new AppError('Operating Hours cannot be empty', 400));
+      }
+
+      const days = req.body.operatingHours.map((hour) => hour.day);
+      const uniqueDays = new Set(days);
+      if (uniqueDays.size !== days.length) {
+        return next(
+          new AppError(
+            'Duplicate days in operating hours are not allowed',
+            400,
+          ),
+        );
+      }
+    }
+
+    Object.assign(restaurant, req.body);
+    await restaurant.save();
+    res.status(200).json({ status: 'success', data: restaurant });
+  } catch (error: any) {
+    next(error);
+  }
+}
 
 export const deleteRestaurant: RequestHandler<{
   restaurantId: string;

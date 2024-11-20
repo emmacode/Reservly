@@ -1,7 +1,6 @@
-import mongoose, { Query } from 'mongoose';
+import mongoose from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
-import crypto, { hash } from 'crypto';
 
 import { IUser } from '../types';
 import { generateToken } from '../utils/generate.token';

@@ -1,34 +1,87 @@
-import { Transform } from 'class-transformer';
+import 'reflect-metadata';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
+  ValidateNested,
 } from 'class-validator';
 import { TableStatus } from '../types';
 
-export class CreateRestaurantDto {
+export enum DaysOfWeek {
+  MONDAY = 'MONDAY',
+  TUESDAY = 'TUESDAY',
+  WEDNESDAY = 'WEDNESDAY',
+  THURSDAY = 'THURSDAY',
+  FRIDAY = 'FRIDAY',
+  SATURDAY = 'SATURDAY',
+  SUNDAY = 'SUNDAY',
+}
+
+export class OperatingHoursDto {
+  @IsEnum(DaysOfWeek)
+  day!: DaysOfWeek;
+
   @IsString()
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+    message: 'Open time must be in HH:MM format (24-hour)',
+  })
+  openTime!: string;
+
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+    message: 'Close time must be in HH:MM format (24-hour)',
+  })
+  closeTime!: string;
+
+  @IsBoolean()
+  isOpen: boolean = true;
+}
+
+export class CreateRestaurantDto {
+  @IsString({ message: 'Restaurant name is needed' })
+  @Matches(/\S/, { message: 'Restaurant name cannot be empty' })
   name!: string;
 
-  @IsString()
+  @IsString({ message: 'Restaurant address is needed' })
+  @Matches(/\S/, { message: 'Restaurant address cannot be empty' })
   address!: string;
 
-  @IsString()
+  @IsString({ message: 'Restaurant email is needed' })
   @IsEmail()
+  @Matches(/\S/, { message: 'Restaurant email cannot be empty' })
   email!: string;
+
+  @IsArray({ message: 'Please provide restaurant operating hours' })
+  @ArrayNotEmpty({ message: 'Operating hours cannot be empty' })
+  @ValidateNested({ each: true })
+  @Type(() => OperatingHoursDto)
+  operatingHours!: OperatingHoursDto[];
 }
 
 export class UpdateRestaurantDto {
   @IsOptional()
   @IsString()
+  @Matches(/\S/, { message: 'Restaurant name cannot be empty' })
   name?: string;
 
   @IsOptional()
   @IsString()
+  @Matches(/\S/, { message: 'Restaurant address cannot be empty' })
   address?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty({ message: 'Operating hours cannot be empty if provided' })
+  @ValidateNested({ each: true })
+  @Type(() => OperatingHoursDto)
+  operatingHours?: OperatingHoursDto[];
 }
 
 export class AddTableDto {

@@ -1,5 +1,6 @@
 import { Request } from 'express';
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, Types } from 'mongoose';
+import { DaysOfWeek } from '../dtos/restaurant.dto';
 
 export interface IUser extends Document {
   email: string;
@@ -27,7 +28,7 @@ export interface IUser extends Document {
 export interface IEmailVerificationOptions {
   email: string;
   subject: string;
-  message: string,
+  message: string;
   verificationToken: string;
   req: Request;
 }
@@ -48,4 +49,33 @@ export enum TableStatus {
   Available = 'Available',
   Reserved = 'Reserved',
   Occupied = 'Occupied',
+}
+
+export interface IOperatingHours {
+  day: DaysOfWeek;
+  openTime: string;
+  closingTime: string;
+  isOpen: boolean;
+}
+
+export interface IReservationSlot {
+  tableId: Types.ObjectId;
+  tableNumber: string;
+  availableUntil: Date;
+  description?: string;
+  capacity: number;
+}
+
+export interface IReservationRequest {
+  restaurantName: string;
+  reserveDate: {
+    date: string;
+    time: string;
+  };
+  persons: number;
+}
+
+export interface IReservationValidationResult {
+  isValid: boolean;
+  errorMessage?: string;
 }
