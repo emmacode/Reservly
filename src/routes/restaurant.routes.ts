@@ -19,6 +19,7 @@ import {
   updateTable,
 } from '../controllers/restaurant.controller';
 import { protect } from '../controllers/auth.controller';
+import { CreateReservationDto } from '../dtos/reservation.dto';
 
 const router = express.Router();
 

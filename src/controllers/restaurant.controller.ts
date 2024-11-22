@@ -36,7 +36,7 @@ export const registerResturant: TypedRequestHandler<
       ) {
         return next(new AppError('Operating Hours cannot be empty', 400));
       }
-      
+
       const days = operatingHours.map((hour) => hour.day);
       const uniqueDays = new Set(days);
       if (uniqueDays.size !== days.length) {
@@ -87,10 +87,12 @@ export const getSingleRestaurant: RequestHandler<{
 export const updateRestaurant: TypedRequestHandler<
   UpdateRestaurantDto,
   any,
-  { id: string }
+  { restaurantId: string }
 > = async (req, res, next) => {
+  const { restaurantId } = req.params;
+
   try {
-    const restaurant = await Restaurant.findById(req.params.id);
+    const restaurant = await Restaurant.findById(restaurantId);
     if (!restaurant) {
       throw new AppError('Restaurant not found', 404);
     }
@@ -128,7 +130,7 @@ export const updateRestaurant: TypedRequestHandler<
   } catch (error: any) {
     next(error);
   }
-}
+};
 
 export const deleteRestaurant: RequestHandler<{
   restaurantId: string;
@@ -197,7 +199,7 @@ export const addTable: TypedRequestHandler<
         if (adjacentTables && adjacentTables.length > 0) {
           const tables = await Table.find({
             restaurantId,
-            tableNumber: { $in: adjacentTables },
+            tableNumber: { $in: adjacentTables }, // this fetches table with the specified numbers in adjacentTables
           });
 
           if (tables.length !== adjacentTables.length) {
@@ -284,21 +286,22 @@ export const updateTable: TypedRequestHandler<
           await Table.updateMany(
             { restaurantId, adjacentTables: oldTableNumber },
             { $pull: { adjacentTables: oldTableNumber } },
-            { session }
+            { session },
           );
         }
 
         // if adjacentTables is being updated, remove this table's number from tables that are no longer adjacent
         if (updateData.adjacentTables) {
-          const removedAdjacentTables = existingTable.adjacentTables?.filter(
-            (t) => !updateData.adjacentTables?.includes(t)
-          ) || [];
+          const removedAdjacentTables =
+            existingTable.adjacentTables?.filter(
+              (t) => !updateData.adjacentTables?.includes(t),
+            ) || [];
 
           if (removedAdjacentTables.length > 0) {
             await Table.updateMany(
               { restaurantId, tableNumber: { $in: removedAdjacentTables } },
               { $pull: { adjacentTables: oldTableNumber } },
-              { session }
+              { session },
             );
           }
         }
@@ -369,7 +372,7 @@ export const deleteTable: TypedRequestHandler<
         await Table.updateMany(
           { restaurantId, adjacentTables: existingTable.tableNumber },
           { $pull: { adjacentTables: existingTable.tableNumber } },
-          { session }
+          { session },
         );
 
         // Delete the table
