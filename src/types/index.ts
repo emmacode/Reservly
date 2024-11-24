@@ -54,28 +54,17 @@ export enum TableStatus {
 export interface IOperatingHours {
   day: DaysOfWeek;
   openTime: string;
-  closingTime: string;
+  closeTime: string;
   isOpen: boolean;
 }
 
-export interface IReservationSlot {
-  tableId: Types.ObjectId;
-  tableNumber: string;
-  availableUntil: Date;
-  description?: string;
+export interface IReservationTimeSlot {
+  time: string;
+  available: boolean;
   capacity: number;
 }
 
-export interface IReservationRequest {
-  restaurantName: string;
-  reserveDate: {
-    date: string;
-    time: string;
-  };
-  persons: number;
-}
-
-export interface IReservationValidationResult {
-  isValid: boolean;
-  errorMessage?: string;
+export interface IReservationWindow {
+  startTime: Date;
+  endTime: Date;
 }
