@@ -33,6 +33,14 @@ export interface IEmailVerificationOptions {
   req: Request;
 }
 
+export interface IRestaurant extends Document {
+  name: string;
+  address: string;
+  email: string;
+  ownerId: mongoose.Schema.Types.ObjectId;
+  operatingHours: IOperatingHours;
+}
+
 export interface ITable extends Document {
   restaurantId: mongoose.Schema.Types.ObjectId;
   tableNumber: string;
@@ -67,4 +75,9 @@ export interface IReservationTimeSlot {
 export interface IReservationWindow {
   startTime: Date;
   endTime: Date;
+}
+
+export interface IExistingReservation {
+  time: Date;
+  persons: string;
 }

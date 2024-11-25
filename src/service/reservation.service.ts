@@ -1,13 +1,57 @@
+import { Types } from 'mongoose';
+
 import {
+  IExistingReservation,
   IOperatingHours,
   IReservationTimeSlot,
   IReservationWindow,
 } from '../types';
+import Reservation from '../models/Reservation';
 
 export class ReservationService {
   private static readonly TIME_SLOT_INTERVAL = 15;
   private static readonly DEFAULT_DINING_DURATION = 120;
   private static readonly MIN_ADVANCE_TIME = 60;
+
+  static createReservationWindows(
+    reservations: IExistingReservation[],
+  ): IReservationWindow[] {
+    return reservations.map((reservation) => ({
+      startTime: new Date(reservation.time),
+      endTime: new Date(
+        reservation.time.getTime() + this.DEFAULT_DINING_DURATION * 60000,
+      ),
+    }));
+  }
+
+  static async getAvailableTimeSlots(
+    restaurantId: Types.ObjectId,
+    targetDate: Date,
+    restaurant: any,
+  ): Promise<IReservationTimeSlot[]> {
+    const nextDate = new Date(targetDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    const existingReservations = await Reservation.find({
+      restaurantId,
+      date: {
+        $gte: targetDate,
+        $lt: nextDate,
+      },
+    }).select('time persons');
+
+    const reservationWindows =
+      this.createReservationWindows(existingReservations);
+
+    const dateString = targetDate.toISOString().split('T')[0];
+
+    return this.generateTimeSlots(
+      restaurant.operatingHours,
+      dateString,
+      restaurant.capacity,
+      reservationWindows,
+    );
+  }
 
   static generateTimeSlots(
     operatingHours: IOperatingHours,
@@ -72,6 +116,28 @@ export class ReservationService {
 
     const reservedCapacity = overlappingReservations.length;
     return Math.max(0, totalCapacity - reservedCapacity);
+  }
+
+  static isValidReservationDate(requestDate: Date): boolean {
+    const currentDate = new Date();
+    return requestDate.getDate() >= currentDate.getDate();
+  }
+
+  static isValidRestaurantOperatingHours(dayOperatingHours: any, time: string) {
+    const { openTime, closeTime } = dayOperatingHours;
+    const [openHour, openMinute] = openTime.split(':').map(Number);
+    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+
+    const restaurantOpenTime = openHour + openMinute / 60;
+    const restaurantCloseTime = closeHour + closeMinute / 60;
+
+    const [userRequestHour, userRequestMinutes] = time.split(':').map(Number);
+    const userRequestTime = userRequestHour + userRequestMinutes / 60;
+
+    return (
+      userRequestTime < restaurantOpenTime ||
+      userRequestTime > restaurantCloseTime
+    );
   }
 
   static isValidReservationTime(requestDateTime: Date): boolean {

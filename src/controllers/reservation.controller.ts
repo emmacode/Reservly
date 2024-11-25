@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { Types } from 'mongoose';
 
 import CatchAsync from '../utils/catch-async';
 import { TypedRequestHandler } from '../types/express';
@@ -6,6 +7,7 @@ import { CreateReservationDto } from '../dtos/reservation.dto';
 import Restaurant from '../models/Restaurant';
 import AppError from '../utils/app-error';
 import { formatTime } from '../utils/date-time.format';
+import { ReservationService } from '../service/reservation.service';
 
 export const checkAvailability: TypedRequestHandler<
   CreateReservationDto,
@@ -17,7 +19,6 @@ export const checkAvailability: TypedRequestHandler<
     reserveDate: { date, time },
   } = req.body;
   const reservationDateTime = new Date(`${date}T${time}`);
-  const currentDateTime = new Date();
 
   // Check for the restaurant to see if its exist
   const restaurant = await Restaurant.findById(restaurantId);
@@ -27,38 +28,30 @@ export const checkAvailability: TypedRequestHandler<
   }
 
   // we want to check the openTime and closeTime of the restaurant for the particular day user is reserving for
-  const currentDay = new Date()
+  const requestedDay = new Date()
     .toLocaleDateString('en-US', { weekday: 'long' })
     .toUpperCase();
 
-  const currentDayOperatingHours = restaurant.operatingHours.find(
-    (day) => day.day === currentDay && day.isOpen,
+  const dayOperatingHours = restaurant.operatingHours.find(
+    (day) => day.day === requestedDay && day.isOpen,
   );
 
-  if (!currentDayOperatingHours) {
-    return next(new AppError(`The restaurant is closed on ${currentDay}`, 400));
+  if (!dayOperatingHours) {
+    return next(
+      new AppError(`The restaurant is closed on ${requestedDay}`, 400),
+    );
   }
 
-  if (reservationDateTime < currentDateTime) {
-    return next(new AppError('Rservation date cannot be in the past', 400));
+  if (!ReservationService.isValidReservationDate(reservationDateTime)) {
+    return next(new AppError('Reservation date cannot be in the past', 400));
   }
 
-  const { openTime, closeTime } = currentDayOperatingHours;
-  const [openHour, openMinute] = openTime.split(':').map(Number);
-  const [closeHour, closeMinute] = closeTime.split(':').map(Number);
-
-  const restaurantOpenTime = openHour + openMinute / 60;
-  const restaurantCloseTime = closeHour + closeMinute / 60;
-
-  const [userRequestHour, userRequestMinutes] = time.split(':').map(Number);
-  const userRequestTime = userRequestHour + userRequestMinutes / 60;
-
+  const { openTime, closeTime } = dayOperatingHours;
   const openTimeFormatted = formatTime(openTime);
   const closeTimeFormatted = formatTime(closeTime);
 
   if (
-    userRequestTime < restaurantOpenTime ||
-    userRequestTime > restaurantCloseTime
+    ReservationService.isValidRestaurantOperatingHours(dayOperatingHours, time)
   ) {
     return next(
       new AppError(
@@ -68,8 +61,31 @@ export const checkAvailability: TypedRequestHandler<
     );
   }
 
+  // Check if reservation time is valid
+  if (!ReservationService.isValidReservationTime(reservationDateTime)) {
+    return next(
+      new AppError('Reservation must be made at least 1 hour in advance', 400),
+    );
+  }
+
+  const targetDate = new Date(`${date}T00:00:00.000Z`);
+
+  const timeslots = await ReservationService.getAvailableTimeSlots(
+    new Types.ObjectId(restaurantId),
+    targetDate,
+    restaurant,
+  );
+
   res.status(200).json({
-    isValid: true,
-    message: 'Available for reservation',
+    status: 'success',
+    data: {
+      restaurantName: restaurant.name,
+      date,
+      operatingHours: {
+        openTime: formatTime(dayOperatingHours.openTime),
+        closeTime: formatTime(dayOperatingHours.closeTime),
+      },
+      timeslots,
+    },
   });
 });
