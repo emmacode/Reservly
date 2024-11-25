@@ -8,6 +8,9 @@ import Restaurant from '../models/Restaurant';
 import AppError from '../utils/app-error';
 import { formatTime } from '../utils/date-time.format';
 import { ReservationService } from '../service/reservation.service';
+import { RestaurantService } from '../service/restaurant.service';
+import { IOperatingHours, IReservation } from '../types';
+import Reservation from '../models/Reservation';
 
 export const checkAvailability: TypedRequestHandler<
   CreateReservationDto,
@@ -16,7 +19,9 @@ export const checkAvailability: TypedRequestHandler<
 > = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { restaurantId } = req.params;
   const {
+    restaurantName,
     reserveDate: { date, time },
+    persons,
   } = req.body;
   const reservationDateTime = new Date(`${date}T${time}`);
 
@@ -32,9 +37,10 @@ export const checkAvailability: TypedRequestHandler<
     .toLocaleDateString('en-US', { weekday: 'long' })
     .toUpperCase();
 
-  const dayOperatingHours = restaurant.operatingHours.find(
-    (day) => day.day === requestedDay && day.isOpen,
-  );
+  const dayOperatingHours: IOperatingHours | undefined =
+    restaurant.operatingHours.find(
+      (day) => day.day === requestedDay && day.isOpen,
+    );
 
   if (!dayOperatingHours) {
     return next(
@@ -51,7 +57,7 @@ export const checkAvailability: TypedRequestHandler<
   const closeTimeFormatted = formatTime(closeTime);
 
   if (
-    ReservationService.isValidRestaurantOperatingHours(dayOperatingHours, time)
+    RestaurantService.isValidRestaurantOperatingHours(dayOperatingHours, time)
   ) {
     return next(
       new AppError(
@@ -74,17 +80,22 @@ export const checkAvailability: TypedRequestHandler<
     new Types.ObjectId(restaurantId),
     targetDate,
     restaurant,
+    dayOperatingHours,
   );
+
+  const newReservation: IReservation = await Reservation.create({
+    restaurantId,
+    restaurantName,
+    date,
+    time: reservationDateTime,
+    persons,
+  });
+  console.log(newReservation, 'newReservation');
 
   res.status(200).json({
     status: 'success',
     data: {
-      restaurantName: restaurant.name,
-      date,
-      operatingHours: {
-        openTime: formatTime(dayOperatingHours.openTime),
-        closeTime: formatTime(dayOperatingHours.closeTime),
-      },
+      reservation: newReservation,
       timeslots,
     },
   });

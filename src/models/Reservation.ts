@@ -9,7 +9,7 @@ const ReservationSchema = new mongoose.Schema({
   restaurantName: { type: String, required: true },
   date: { type: Date, required: true },
   time: { type: Date, required: true },
-  persons: { type: String, required: true },
+  persons: { type: Number, required: true },
 });
 
 const Reservation = mongoose.model('Reservation', ReservationSchema);

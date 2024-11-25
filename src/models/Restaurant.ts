@@ -36,6 +36,16 @@ const RestaurantSchema = new mongoose.Schema(
         message: 'Restaurant email cannot be empty',
       },
     },
+    capacity: {
+      type: Number,
+      required: [true, 'Restaurant capacity is needed'],
+      validate: {
+        validator: function (v: number) {
+          return v > 0;
+        },
+        message: 'Capacity must be a positive number and greater than 0',
+      },
+    },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

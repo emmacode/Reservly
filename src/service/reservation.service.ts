@@ -5,6 +5,7 @@ import {
   IOperatingHours,
   IReservationTimeSlot,
   IReservationWindow,
+  IRestaurant,
 } from '../types';
 import Reservation from '../models/Reservation';
 
@@ -27,7 +28,8 @@ export class ReservationService {
   static async getAvailableTimeSlots(
     restaurantId: Types.ObjectId,
     targetDate: Date,
-    restaurant: any,
+    restaurant: IRestaurant,
+    dayOperatingHours: IOperatingHours,
   ): Promise<IReservationTimeSlot[]> {
     const nextDate = new Date(targetDate);
     nextDate.setDate(nextDate.getDate() + 1);
@@ -39,14 +41,16 @@ export class ReservationService {
         $lt: nextDate,
       },
     }).select('time persons');
+    console.log(existingReservations, 'existingReservations');
 
     const reservationWindows =
       this.createReservationWindows(existingReservations);
+    console.log(reservationWindows, 'reservationWindows');
 
     const dateString = targetDate.toISOString().split('T')[0];
 
     return this.generateTimeSlots(
-      restaurant.operatingHours,
+      dayOperatingHours,
       dateString,
       restaurant.capacity,
       reservationWindows,
@@ -121,23 +125,6 @@ export class ReservationService {
   static isValidReservationDate(requestDate: Date): boolean {
     const currentDate = new Date();
     return requestDate.getDate() >= currentDate.getDate();
-  }
-
-  static isValidRestaurantOperatingHours(dayOperatingHours: any, time: string) {
-    const { openTime, closeTime } = dayOperatingHours;
-    const [openHour, openMinute] = openTime.split(':').map(Number);
-    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
-
-    const restaurantOpenTime = openHour + openMinute / 60;
-    const restaurantCloseTime = closeHour + closeMinute / 60;
-
-    const [userRequestHour, userRequestMinutes] = time.split(':').map(Number);
-    const userRequestTime = userRequestHour + userRequestMinutes / 60;
-
-    return (
-      userRequestTime < restaurantOpenTime ||
-      userRequestTime > restaurantCloseTime
-    );
   }
 
   static isValidReservationTime(requestDateTime: Date): boolean {

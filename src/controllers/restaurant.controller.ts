@@ -19,7 +19,7 @@ export const registerResturant: TypedRequestHandler<
   CreateRestaurantDto
 > = async (req, res, next) => {
   try {
-    const { name, email, address, operatingHours } = req.body;
+    const { name, email, address, capacity, operatingHours } = req.body;
 
     let restaurant = await Restaurant.findOne({
       email,
@@ -50,6 +50,7 @@ export const registerResturant: TypedRequestHandler<
     restaurant = new Restaurant({
       name,
       email,
+      capacity,
       address,
       ownerId: req.user?.id,
       operatingHours: operatingHours,

@@ -10,6 +10,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { TableStatus } from '../types';
@@ -58,6 +59,10 @@ export class CreateRestaurantDto {
   @Matches(/\S/, { message: 'Restaurant email cannot be empty' })
   email!: string;
 
+  @IsNumber({}, { message: 'Capacity must be a number' })
+  @Min(1, { message: 'Capacity must be greater than 0' })
+  capacity!: number;
+
   @IsArray({ message: 'Please provide restaurant operating hours' })
   @ArrayNotEmpty({ message: 'Operating hours cannot be empty' })
   @ValidateNested({ each: true })
@@ -75,6 +80,11 @@ export class UpdateRestaurantDto {
   @IsString()
   @Matches(/\S/, { message: 'Restaurant address cannot be empty' })
   address?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Matches(/\S/, { message: 'Restaurant capacity cannot be empty' })
+  capacity!: number;
 
   @IsOptional()
   @IsArray()

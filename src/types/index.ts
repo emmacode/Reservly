@@ -37,8 +37,11 @@ export interface IRestaurant extends Document {
   name: string;
   address: string;
   email: string;
-  ownerId: mongoose.Schema.Types.ObjectId;
-  operatingHours: IOperatingHours;
+  capacity: number;
+  ownerId: mongoose.Types.ObjectId;
+  operatingHours: IOperatingHours[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ITable extends Document {
@@ -57,6 +60,14 @@ export enum TableStatus {
   Available = 'Available',
   Reserved = 'Reserved',
   Occupied = 'Occupied',
+}
+
+export interface IReservation extends Document {
+  restaurantId: mongoose.Types.ObjectId;
+  restaurantName: string;
+  date: Date;
+  time: Date;
+  persons: number;
 }
 
 export interface IOperatingHours {
@@ -79,5 +90,5 @@ export interface IReservationWindow {
 
 export interface IExistingReservation {
   time: Date;
-  persons: string;
+  persons: number;
 }
