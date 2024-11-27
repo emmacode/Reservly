@@ -79,8 +79,8 @@ export interface IOperatingHours {
 
 export interface IReservationTimeSlot {
   time: string;
-  available: boolean;
-  capacity: number;
+  available?: boolean;
+  capacity?: number;
 }
 
 export interface IReservationWindow {

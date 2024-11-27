@@ -3,7 +3,10 @@ import { Types } from 'mongoose';
 
 import CatchAsync from '../utils/catch-async';
 import { TypedRequestHandler } from '../types/express';
-import { CreateReservationDto } from '../dtos/reservation.dto';
+import {
+  CheckAvailabilityDto,
+  CreateReservationDto,
+} from '../dtos/reservation.dto';
 import Restaurant from '../models/Restaurant';
 import AppError from '../utils/app-error';
 import { formatTime } from '../utils/date-time.format';
@@ -13,15 +16,13 @@ import { IOperatingHours, IReservation } from '../types';
 import Reservation from '../models/Reservation';
 
 export const checkAvailability: TypedRequestHandler<
-  CreateReservationDto,
+  CheckAvailabilityDto,
   any,
   { restaurantId: string }
 > = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { restaurantId } = req.params;
   const {
-    restaurantName,
     reserveDate: { date, time },
-    persons,
   } = req.body;
   const reservationDateTime = new Date(`${date}T${time}`);
 
@@ -53,6 +54,7 @@ export const checkAvailability: TypedRequestHandler<
   }
 
   const { openTime, closeTime } = dayOperatingHours;
+
   const openTimeFormatted = formatTime(openTime);
   const closeTimeFormatted = formatTime(closeTime);
 
@@ -70,7 +72,10 @@ export const checkAvailability: TypedRequestHandler<
   // Check if reservation time is valid
   if (!ReservationService.isValidReservationTime(reservationDateTime)) {
     return next(
-      new AppError('Reservation must be made at least 1 hour in advance', 400),
+      new AppError(
+        'The restaurant take reservations up to 1 hour before dining time',
+        400,
+      ),
     );
   }
 
@@ -81,7 +86,44 @@ export const checkAvailability: TypedRequestHandler<
     targetDate,
     restaurant,
     dayOperatingHours,
+    time,
   );
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      timeslots,
+    },
+  });
+
+  next();
+});
+
+export const createReservation: TypedRequestHandler<
+  CreateReservationDto,
+  any,
+  { restaurantId: string }
+> = CatchAsync(async (req, res, next) => {
+  const { restaurantId } = req.params;
+  const {
+    restaurantName,
+    date,
+    time,
+    persons,
+    first_name,
+    last_name,
+    phone,
+    email,
+    additional_notes,
+  } = req.body;
+  const reservationDateTime = new Date(`${date}T${time}`);
+
+  const restaurant = await Restaurant.findById(restaurantId);
+  console.log(restaurant, 'restaurant');
+
+  if (restaurant?.name !== restaurantName) {
+    return next(new AppError('Restaurant name does not match', 400));
+  }
 
   const newReservation: IReservation = await Reservation.create({
     restaurantId,
@@ -89,14 +131,13 @@ export const checkAvailability: TypedRequestHandler<
     date,
     time: reservationDateTime,
     persons,
+    first_name,
+    last_name,
+    phone,
+    email,
+    additional_notes,
   });
-  console.log(newReservation, 'newReservation');
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      reservation: newReservation,
-      timeslots,
-    },
-  });
+  res.status(201).json({ status: 'success', message: 'oti lorr!' });
+//   console.log(newReservation, 'newReservation');
 });

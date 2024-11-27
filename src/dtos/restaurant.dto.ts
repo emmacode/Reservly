@@ -46,16 +46,16 @@ export class OperatingHoursDto {
 }
 
 export class CreateRestaurantDto {
-  @IsString({ message: 'Restaurant name is needed' })
+  @IsString()
   @Matches(/\S/, { message: 'Restaurant name cannot be empty' })
   name!: string;
 
-  @IsString({ message: 'Restaurant address is needed' })
+  @IsString()
   @Matches(/\S/, { message: 'Restaurant address cannot be empty' })
   address!: string;
 
-  @IsString({ message: 'Restaurant email is needed' })
-  @IsEmail()
+  @IsString()
+  @IsEmail({}, { message: 'Invalid email format' })
   @Matches(/\S/, { message: 'Restaurant email cannot be empty' })
   email!: string;
 

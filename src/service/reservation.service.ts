@@ -13,6 +13,7 @@ export class ReservationService {
   private static readonly TIME_SLOT_INTERVAL = 15;
   private static readonly DEFAULT_DINING_DURATION = 120;
   private static readonly MIN_ADVANCE_TIME = 60;
+  private static readonly SUGGESTED_TIMESLOTS_RANGE = 120;
 
   static createReservationWindows(
     reservations: IExistingReservation[],
@@ -30,6 +31,7 @@ export class ReservationService {
     targetDate: Date,
     restaurant: IRestaurant,
     dayOperatingHours: IOperatingHours,
+    desiredTime?: string,
   ): Promise<IReservationTimeSlot[]> {
     const nextDate = new Date(targetDate);
     nextDate.setDate(nextDate.getDate() + 1);
@@ -41,11 +43,11 @@ export class ReservationService {
         $lt: nextDate,
       },
     }).select('time persons');
-    console.log(existingReservations, 'existingReservations');
+    // console.log(existingReservations, 'existingReservations');
 
     const reservationWindows =
       this.createReservationWindows(existingReservations);
-    console.log(reservationWindows, 'reservationWindows');
+    // console.log(reservationWindows, 'reservationWindows');
 
     const dateString = targetDate.toISOString().split('T')[0];
 
@@ -54,6 +56,7 @@ export class ReservationService {
       dateString,
       restaurant.capacity,
       reservationWindows,
+      desiredTime,
     );
   }
 
@@ -62,6 +65,7 @@ export class ReservationService {
     date: string,
     restaurantCapacity: number,
     existingReservations: IReservationWindow[],
+    desiredTime?: string,
   ): IReservationTimeSlot[] {
     const slots: IReservationTimeSlot[] = [];
     const [openHour, openMinute] = operatingHours.openTime
@@ -75,6 +79,25 @@ export class ReservationService {
     let currentMinutes = openHour * 60 + openMinute;
     const closeMinutes = closeHour * 60 + closeMinute;
 
+    let startMinutes = currentMinutes;
+    let endMinutes = closeMinutes;
+
+    if (desiredTime) {
+      const [desiredHour, desiredMinute] = desiredTime.split(':').map(Number);
+      const desiredTimeInMinutes = desiredHour * 60 + desiredMinute;
+
+      startMinutes = Math.max(
+        currentMinutes,
+        desiredTimeInMinutes - this.SUGGESTED_TIMESLOTS_RANGE / 2,
+      );
+      endMinutes = Math.min(
+        closeMinutes,
+        desiredTimeInMinutes + this.SUGGESTED_TIMESLOTS_RANGE / 2,
+      );
+    }
+
+    currentMinutes = startMinutes;
+
     // generate slots until closing time
     while (currentMinutes + this.TIME_SLOT_INTERVAL <= closeMinutes) {
       const hours = Math.floor(currentMinutes / 60);
@@ -82,29 +105,41 @@ export class ReservationService {
       const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
       const slotDateTime = new Date(`${date}T${timeString}`);
-      const availableCapacity = this.calculateAvailableCapacity(
+      
+      const isTimeSlotAvailable = this.isEntireTimeSlotAvailable(
         slotDateTime,
         restaurantCapacity,
         existingReservations,
       );
 
-      slots.push({
-        time: timeString,
-        available: availableCapacity > 0,
-        capacity: availableCapacity,
-      });
+      if (isTimeSlotAvailable) {
+        slots.push({
+          time: timeString,
+          // available: availableCapacity > 0,
+          // capacity: availableCapacity,
+        });
+      }
 
       currentMinutes += this.TIME_SLOT_INTERVAL;
+    }
+
+    if (slots.length === 0 && desiredTime) {
+      return this.generateTimeSlots(
+        operatingHours,
+        date,
+        restaurantCapacity,
+        existingReservations,
+      );
     }
 
     return slots;
   }
 
-  private static calculateAvailableCapacity(
+  private static isEntireTimeSlotAvailable(
     slotDateTime: Date,
     totalCapacity: number,
     existingReservations: IReservationWindow[],
-  ): number {
+  ): boolean {
     const slotStart = slotDateTime;
     const slotEnd = new Date(
       slotStart.getTime() + this.DEFAULT_DINING_DURATION * 60000,
@@ -118,8 +153,7 @@ export class ReservationService {
       },
     );
 
-    const reservedCapacity = overlappingReservations.length;
-    return Math.max(0, totalCapacity - reservedCapacity);
+    return overlappingReservations.length === 0;
   }
 
   static isValidReservationDate(requestDate: Date): boolean {
