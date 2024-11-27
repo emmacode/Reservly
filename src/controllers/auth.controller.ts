@@ -75,7 +75,10 @@ export const signup = CatchAsync(async (req, res, next) => {
       req,
     });
 
-    createSendToken(newUser, 201, res);
+    res.status(201).json({
+      status: 'success',
+      message: 'Account created successfully! Please check your email to verify your account.',
+    });
   } catch (error) {
     // Delete created user if email sending fails
     await User.findByIdAndDelete(newUser._id);
@@ -96,6 +99,37 @@ export const login = CatchAsync(async (req, res, next) => {
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
+  }
+
+  if (!user.verified) {
+    // generate new verification token
+    const { token, hashedToken } = generateToken();
+    
+    user.emailVerificationToken = hashedToken;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save({ validateBeforeSave: false });
+
+    try {
+      sendVerificationEmail({
+        email: user.email,
+        subject: 'Please Verify Your Email Address',
+        message:
+          'You attempted to log in, but your email is not verified. Please click the link below to verify your email address',
+        verificationToken: token,
+        req,
+      });
+
+      return next(
+        new AppError(
+          'Please verify your email address. A new verification link has been sent to your email.',
+          403
+        ),
+      );
+    } catch (error) {
+      return next(
+        new AppError('Error sending verification email. Please try again later.', 500),
+      );
+    }
   }
 
   createSendToken(user, 200, res);
