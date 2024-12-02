@@ -64,7 +64,6 @@ export enum TableStatus {
 
 export interface IReservation extends Document {
   restaurantId: mongoose.Types.ObjectId;
-  restaurantName: string;
   date: Date;
   time: Date;
   persons: number;

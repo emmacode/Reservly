@@ -37,10 +37,6 @@ export class CheckAvailabilityDto {
 }
 
 export class CreateReservationDto {
-  @IsString()
-  @Matches(/\S/, { message: 'Restaurant Name cannot be empty' })
-  restaurantName!: string;
-
   @ValidateNested()
   @Type(() => ReservationDateDto)
   reserveDate!: ReservationDateDto;

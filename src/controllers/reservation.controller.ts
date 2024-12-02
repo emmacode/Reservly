@@ -127,7 +127,6 @@ export const createReservation: TypedRequestHandler<
 
   const newReservation: IReservation = await Reservation.create({
     restaurantId,
-    restaurantName,
     date,
     time: reservationDateTime,
     persons,

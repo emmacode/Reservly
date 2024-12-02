@@ -6,7 +6,6 @@ const ReservationSchema = new mongoose.Schema({
     ref: 'Restaurant',
     required: true,
   },
-  restaurantName: { type: String, required: true },
   date: { type: Date, required: true },
   time: { type: Date, required: true },
   first_name: { type: String, required: true },
