@@ -4,6 +4,7 @@ import { protect } from '../controllers/auth.controller';
 import {
   CheckAvailabilityDto,
   CreateReservationDto,
+  UpdateReservationDto,
 } from '../dtos/reservation.dto';
 import {
   checkAvailability,
@@ -34,6 +35,12 @@ router.post(
   createReservation,
 );
 
-router.patch('/:reservationId', protect, updateReservation);
+router.patch(
+  '/:restaurantId/reservation/:reservationId',
+  protect,
+  validateData(UpdateReservationDto),
+  validateReservation,
+  updateReservation,
+);
 
 export default router;

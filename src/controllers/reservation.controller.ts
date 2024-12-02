@@ -6,6 +6,8 @@ import { TypedRequestHandler } from '../types/express';
 import {
   CheckAvailabilityDto,
   CreateReservationDto,
+  UpdateReservationDto,
+  ValidateReservationDto,
 } from '../dtos/reservation.dto';
 import Restaurant from '../models/Restaurant';
 import AppError from '../utils/app-error';
@@ -17,7 +19,7 @@ import Reservation from '../models/Reservation';
 import { UserRoles } from '../utils/constants';
 
 export const validateReservation: TypedRequestHandler<
-  CheckAvailabilityDto,
+  ValidateReservationDto,
   any,
   { restaurantId: string }
 > = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -186,4 +188,48 @@ export const createReservation: TypedRequestHandler<
     .json({ status: 'success', data: { reservation: newReservation } });
 });
 
+export const updateReservation: TypedRequestHandler<
+  UpdateReservationDto,
+  any,
+  { restaurantId: string; reservationId: string }
+> = CatchAsync(async (req, res, next) => {
+  const { restaurantId, reservationId } = req.params;
+  const {
+    reserveDate: { date, time },
+    persons,
+    phone,
+  } = req.body;
+  const reservationDateTime = new Date(`${date}T${time}`);
+  const reservationDate = new Date(date);
 
+  if (
+    req.user?.role !== UserRoles.Admin &&
+    req.user?.role !== UserRoles.Owner
+  ) {
+    return next(new AppError('Unauthorized access', 403));
+  }
+
+  const reservation = await Reservation.findByIdAndUpdate(
+    reservationId,
+    {
+      date: reservationDate,
+      time: reservationDateTime,
+      persons,
+      phone,
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+  if (restaurantId !== reservation?.restaurantId.toString()) {
+    return next(new AppError('Wrong restaurant', 400));
+  }
+
+  if (!reservation) {
+    return next(new AppError('No reservation with that ID', 400));
+  }
+
+  res.status(200).json({ status: 'success', data: { reservation } });
+});

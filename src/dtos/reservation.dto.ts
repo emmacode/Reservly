@@ -22,6 +22,12 @@ class ReservationDateDto {
   time!: string;
 }
 
+export class ValidateReservationDto {
+  @ValidateNested()
+  @Type(() => ReservationDateDto)
+  reserveDate!: ReservationDateDto;
+}
+
 export class CheckAvailabilityDto {
   @IsString()
   restaurantName!: string;
@@ -70,4 +76,19 @@ export class CreateReservationDto {
   @IsString()
   @IsOptional()
   additional_notes!: string;
+}
+
+export class UpdateReservationDto {
+  @ValidateNested()
+  @Type(() => ReservationDateDto)
+  reserveDate!: ReservationDateDto;
+
+  @IsNumber()
+  @Min(1, { message: 'Minimum of 1 person' })
+  persons!: number;
+
+  @IsPhoneNumber('NG', {
+    message: 'Phone number must be a valid Nigerian number',
+  })
+  phone!: number;
 }
