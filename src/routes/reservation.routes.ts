@@ -8,6 +8,7 @@ import {
 import {
   checkAvailability,
   createReservation,
+  validateReservation,
 } from '../controllers/reservation.controller';
 
 const router = express.Router();
@@ -16,13 +17,14 @@ router.post(
   '/:restaurantId/check-availability',
   protect,
   validateData(CheckAvailabilityDto),
+  validateReservation,
   checkAvailability,
 );
 router.post(
   '/:restaurantId/create-reservation',
   protect,
   validateData(CreateReservationDto),
-  // checkAvailability,
+  validateReservation,
   createReservation,
 );
 

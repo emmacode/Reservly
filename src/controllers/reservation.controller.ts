@@ -12,10 +12,10 @@ import AppError from '../utils/app-error';
 import { formatTime } from '../utils/date-time.format';
 import { ReservationService } from '../service/reservation.service';
 import { RestaurantService } from '../service/restaurant.service';
-import { IOperatingHours, IReservation } from '../types';
+import { IOperatingHours, IReservation, IRestaurant } from '../types';
 import Reservation from '../models/Reservation';
 
-export const checkAvailability: TypedRequestHandler<
+export const validateReservation: TypedRequestHandler<
   CheckAvailabilityDto,
   any,
   { restaurantId: string }
@@ -79,13 +79,37 @@ export const checkAvailability: TypedRequestHandler<
     );
   }
 
+  next();
+});
+
+export const checkAvailability: TypedRequestHandler<
+  CheckAvailabilityDto,
+  any,
+  { restaurantId: string }
+> = CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { restaurantId } = req.params;
+  const {
+    reserveDate: { date, time },
+  } = req.body;
+
+  const restaurant = (await Restaurant.findById(restaurantId)) as IRestaurant;
+
+  const requestedDay = new Date()
+    .toLocaleDateString('en-US', { weekday: 'long' })
+    .toUpperCase();
+
+  const dayOperatingHours: IOperatingHours | undefined =
+    restaurant.operatingHours.find(
+      (day) => day.day === requestedDay && day.isOpen,
+    );
+
   const targetDate = new Date(`${date}T00:00:00.000Z`);
 
   const timeslots = await ReservationService.getAvailableTimeSlots(
     new Types.ObjectId(restaurantId),
     targetDate,
-    restaurant,
-    dayOperatingHours,
+    restaurant as IRestaurant,
+    dayOperatingHours as IOperatingHours,
     time,
   );
 
@@ -95,8 +119,6 @@ export const checkAvailability: TypedRequestHandler<
       timeslots,
     },
   });
-
-  next();
 });
 
 export const createReservation: TypedRequestHandler<
@@ -107,8 +129,7 @@ export const createReservation: TypedRequestHandler<
   const { restaurantId } = req.params;
   const {
     restaurantName,
-    date,
-    time,
+    reserveDate: { date, time },
     persons,
     first_name,
     last_name,
@@ -117,9 +138,9 @@ export const createReservation: TypedRequestHandler<
     additional_notes,
   } = req.body;
   const reservationDateTime = new Date(`${date}T${time}`);
+  const reservationDate = new Date(date);
 
   const restaurant = await Restaurant.findById(restaurantId);
-  console.log(restaurant, 'restaurant');
 
   if (restaurant?.name !== restaurantName) {
     return next(new AppError('Restaurant name does not match', 400));
@@ -127,7 +148,7 @@ export const createReservation: TypedRequestHandler<
 
   const newReservation: IReservation = await Reservation.create({
     restaurantId,
-    date,
+    date: reservationDate,
     time: reservationDateTime,
     persons,
     first_name,
@@ -137,6 +158,7 @@ export const createReservation: TypedRequestHandler<
     additional_notes,
   });
 
-  res.status(201).json({ status: 'success', message: 'oti lorr!' });
-  console.log(newReservation, 'newReservation');
+  res
+    .status(201)
+    .json({ status: 'success', data: { reservation: newReservation } });
 });

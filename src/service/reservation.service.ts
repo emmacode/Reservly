@@ -43,11 +43,9 @@ export class ReservationService {
         $lt: nextDate,
       },
     }).select('time persons');
-    // console.log(existingReservations, 'existingReservations');
 
     const reservationWindows =
       this.createReservationWindows(existingReservations);
-    // console.log(reservationWindows, 'reservationWindows');
 
     const dateString = targetDate.toISOString().split('T')[0];
 
@@ -158,7 +156,7 @@ export class ReservationService {
 
   static isValidReservationDate(requestDate: Date): boolean {
     const currentDate = new Date();
-    
+
     return requestDate.getTime() >= currentDate.getTime();
   }
 
