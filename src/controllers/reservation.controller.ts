@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { Types } from 'mongoose';
 
 import CatchAsync from '../utils/catch-async';
@@ -14,6 +14,7 @@ import { ReservationService } from '../service/reservation.service';
 import { RestaurantService } from '../service/restaurant.service';
 import { IOperatingHours, IReservation, IRestaurant } from '../types';
 import Reservation from '../models/Reservation';
+import { UserRoles } from '../utils/constants';
 
 export const validateReservation: TypedRequestHandler<
   CheckAvailabilityDto,
@@ -121,6 +122,28 @@ export const checkAvailability: TypedRequestHandler<
   });
 });
 
+export const getAllReservations: TypedRequestHandler = CatchAsync(
+  async (req, res, next) => {
+    // more to work on getAllReservation - filter, sort, paginate
+    const reservations = await Reservation.find();
+    res.status(200).json({
+      status: 'success',
+      result: reservations.length,
+      data: { reservations },
+    });
+  },
+);
+
+export const getSingleReservation: RequestHandler<{ reservationId: string }> =
+  CatchAsync(async (req, res, next) => {
+    const reservation = await Reservation.findById(req.params.reservationId);
+    if (!reservation) {
+      return next(new AppError('No reservation with that ID', 400));
+    }
+
+    res.status(200).json({ status: 'success', data: { reservation } });
+  });
+
 export const createReservation: TypedRequestHandler<
   CreateReservationDto,
   any,
@@ -162,3 +185,5 @@ export const createReservation: TypedRequestHandler<
     .status(201)
     .json({ status: 'success', data: { reservation: newReservation } });
 });
+
+

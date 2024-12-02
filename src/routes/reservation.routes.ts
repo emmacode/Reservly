@@ -8,10 +8,16 @@ import {
 import {
   checkAvailability,
   createReservation,
+  getAllReservations,
+  getSingleReservation,
+  updateReservation,
   validateReservation,
 } from '../controllers/reservation.controller';
 
 const router = express.Router();
+
+router.get('/', protect, getAllReservations);
+router.get('/:reservationId', protect, getSingleReservation);
 
 router.post(
   '/:restaurantId/check-availability',
@@ -27,5 +33,7 @@ router.post(
   validateReservation,
   createReservation,
 );
+
+router.patch('/:reservationId', protect, updateReservation);
 
 export default router;
