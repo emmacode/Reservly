@@ -158,7 +158,8 @@ export class ReservationService {
 
   static isValidReservationDate(requestDate: Date): boolean {
     const currentDate = new Date();
-    return requestDate >= currentDate;
+    
+    return requestDate.getTime() >= currentDate.getTime();
   }
 
   static isValidReservationTime(requestDateTime: Date): boolean {
