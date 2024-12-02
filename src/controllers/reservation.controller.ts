@@ -153,7 +153,6 @@ export const createReservation: TypedRequestHandler<
 > = CatchAsync(async (req, res, next) => {
   const { restaurantId } = req.params;
   const {
-    restaurantName,
     reserveDate: { date, time },
     persons,
     first_name,
@@ -164,12 +163,6 @@ export const createReservation: TypedRequestHandler<
   } = req.body;
   const reservationDateTime = new Date(`${date}T${time}`);
   const reservationDate = new Date(date);
-
-  const restaurant = await Restaurant.findById(restaurantId);
-
-  if (restaurant?.name !== restaurantName) {
-    return next(new AppError('Restaurant name does not match', 400));
-  }
 
   const newReservation: IReservation = await Reservation.create({
     restaurantId,
