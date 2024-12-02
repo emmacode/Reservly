@@ -9,6 +9,7 @@ import {
 import {
   checkAvailability,
   createReservation,
+  deleteReservation,
   getAllReservations,
   getSingleReservation,
   updateReservation,
@@ -41,6 +42,12 @@ router.patch(
   validateData(UpdateReservationDto),
   validateReservation,
   updateReservation,
+);
+
+router.delete(
+  '/:restaurantId/reservation/:reservationId',
+  protect,
+  deleteReservation,
 );
 
 export default router;

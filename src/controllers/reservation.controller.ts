@@ -233,3 +233,30 @@ export const updateReservation: TypedRequestHandler<
 
   res.status(200).json({ status: 'success', data: { reservation } });
 });
+
+export const deleteReservation: TypedRequestHandler<
+  any,
+  any,
+  { restaurantId: string; reservationId: string }
+> = CatchAsync(async (req, res, next) => {
+  const { restaurantId, reservationId } = req.params;
+
+  const reservation = await Reservation.findByIdAndDelete(reservationId);
+
+  if (restaurantId !== reservation?.restaurantId.toString()) {
+    return next(new AppError('Wrong restaurant', 400));
+  }
+
+  if (!reservation) {
+    return next(new AppError('Reservation not found', 400));
+  }
+
+  if (
+    req.user?.role !== UserRoles.Admin &&
+    req.user?.role !== UserRoles.Owner
+  ) {
+    return next(new AppError('Unauthorized access', 403));
+  }
+
+  res.status(200).json({ status: 'success', data: null });
+});
