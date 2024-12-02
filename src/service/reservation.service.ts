@@ -105,7 +105,7 @@ export class ReservationService {
       const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
       const slotDateTime = new Date(`${date}T${timeString}`);
-      
+
       const isTimeSlotAvailable = this.isEntireTimeSlotAvailable(
         slotDateTime,
         restaurantCapacity,
@@ -158,7 +158,7 @@ export class ReservationService {
 
   static isValidReservationDate(requestDate: Date): boolean {
     const currentDate = new Date();
-    return requestDate.getDate() >= currentDate.getDate();
+    return requestDate >= currentDate;
   }
 
   static isValidReservationTime(requestDateTime: Date): boolean {

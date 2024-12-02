@@ -1,7 +1,7 @@
 import { IOperatingHours } from '../types';
 
 export class RestaurantService {
-  static isValidRestaurantOperatingHours(
+  static invalidRestaurantOperatingHours(
     dayOperatingHours: IOperatingHours,
     time: string,
   ) {

@@ -59,7 +59,7 @@ export const checkAvailability: TypedRequestHandler<
   const closeTimeFormatted = formatTime(closeTime);
 
   if (
-    RestaurantService.isValidRestaurantOperatingHours(dayOperatingHours, time)
+    RestaurantService.invalidRestaurantOperatingHours(dayOperatingHours, time)
   ) {
     return next(
       new AppError(
@@ -139,5 +139,5 @@ export const createReservation: TypedRequestHandler<
   });
 
   res.status(201).json({ status: 'success', message: 'oti lorr!' });
-//   console.log(newReservation, 'newReservation');
+  console.log(newReservation, 'newReservation');
 });
