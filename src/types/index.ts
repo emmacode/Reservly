@@ -67,6 +67,10 @@ export interface IReservation extends Document {
   date: Date;
   time: Date;
   persons: number;
+  firstName: string;
+  lastName: string;
+  phone: number;
+  additionalNotes?: string | null;
 }
 
 export interface IOperatingHours {

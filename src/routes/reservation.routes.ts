@@ -30,7 +30,6 @@ router.post(
 );
 router.post(
   '/:restaurantId/create-reservation',
-  protect,
   validateData(CreateReservationDto),
   validateReservation,
   createReservation,

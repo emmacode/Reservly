@@ -53,11 +53,11 @@ export class CreateReservationDto {
 
   @IsString()
   @Matches(/\S/, { message: 'First Name cannot be empty' })
-  first_name!: string;
+  firstName!: string;
 
   @IsString()
   @Matches(/\S/, { message: 'Last Name cannot be empty' })
-  last_name!: string;
+  lastName!: string;
 
   @IsPhoneNumber('NG', {
     message: 'Phone number must be a valid Nigerian number',
@@ -66,12 +66,12 @@ export class CreateReservationDto {
 
   @IsString()
   @IsEmail({}, { message: 'Invalid email format' })
-  @Matches(/\S/, { message: 'Restaurant email cannot be empty' })
+  @Matches(/\S/, { message: 'Email cannot be empty' })
   email!: string;
 
   @IsString()
   @IsOptional()
-  additional_notes!: string;
+  additionalNotes!: string;
 }
 
 export class UpdateReservationDto {

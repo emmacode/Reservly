@@ -8,11 +8,11 @@ const ReservationSchema = new mongoose.Schema({
   },
   date: { type: Date, required: true },
   time: { type: Date, required: true },
-  first_name: { type: String, required: true },
-  last_name: { type: String, required: true },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
   phone: { type: Number, required: true },
   email: { type: String, required: true },
-  additional_notes: { type: String, required: true },
+  additionalNotes: String,
   persons: { type: Number, required: true },
 });
 
