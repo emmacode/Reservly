@@ -19,7 +19,7 @@ export const registerResturant: TypedRequestHandler<
   CreateRestaurantDto
 > = async (req, res, next) => {
   try {
-    const { name, email, address } = req.body;
+    const { name, email, address, capacity, operatingHours } = req.body;
 
     let restaurant = await Restaurant.findOne({
       email,
@@ -29,11 +29,31 @@ export const registerResturant: TypedRequestHandler<
       throw new AppError('Restaurant already exists', 400);
     }
 
+    if (operatingHours) {
+      if (
+        !Array.isArray(req.body.operatingHours) ||
+        req.body.operatingHours.length === 0
+      ) {
+        return next(new AppError('Operating Hours cannot be empty', 400));
+      }
+
+      const days = operatingHours.map((hour) => hour.day);
+      const uniqueDays = new Set(days);
+      if (uniqueDays.size !== days.length) {
+        throw new AppError(
+          'Duplicate days in operating hours are not allowed',
+          400,
+        );
+      }
+    }
+
     restaurant = new Restaurant({
       name,
       email,
+      capacity,
       address,
       ownerId: req.user?.id,
+      operatingHours: operatingHours,
     });
     await restaurant.save();
     res.status(201).json({ status: 'success', data: restaurant });
@@ -69,23 +89,49 @@ export const updateRestaurant: TypedRequestHandler<
   UpdateRestaurantDto,
   any,
   { restaurantId: string }
-> = CatchAsync(async (req, res, next) => {
-  const restaurant = await Restaurant.findById(req.params.restaurantId);
-  if (!restaurant) {
-    throw new AppError('Restaurant not found', 404);
-  }
+> = async (req, res, next) => {
+  const { restaurantId } = req.params;
 
-  if (
-    restaurant.ownerId.toString() !== req.user?._id?.toString() &&
-    req.user?.role !== UserRoles.Admin
-  ) {
-    throw new AppError('Unauthorized access', 403);
-  }
+  try {
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      throw new AppError('Restaurant not found', 404);
+    }
 
-  Object.assign(restaurant, req.body);
-  await restaurant.save();
-  res.status(200).json({ status: 'success', data: restaurant });
-});
+    if (
+      restaurant.ownerId.toString() !== req.user?._id?.toString() &&
+      req.user?.role !== UserRoles.Admin
+    ) {
+      throw new AppError('Unauthorized access', 403);
+    }
+
+    if (req.body.operatingHours) {
+      if (
+        !Array.isArray(req.body.operatingHours) ||
+        req.body.operatingHours.length === 0
+      ) {
+        return next(new AppError('Operating Hours cannot be empty', 400));
+      }
+
+      const days = req.body.operatingHours.map((hour) => hour.day);
+      const uniqueDays = new Set(days);
+      if (uniqueDays.size !== days.length) {
+        return next(
+          new AppError(
+            'Duplicate days in operating hours are not allowed',
+            400,
+          ),
+        );
+      }
+    }
+
+    Object.assign(restaurant, req.body);
+    await restaurant.save();
+    res.status(200).json({ status: 'success', data: restaurant });
+  } catch (error: any) {
+    next(error);
+  }
+};
 
 export const deleteRestaurant: RequestHandler<{
   restaurantId: string;
@@ -154,7 +200,7 @@ export const addTable: TypedRequestHandler<
         if (adjacentTables && adjacentTables.length > 0) {
           const tables = await Table.find({
             restaurantId,
-            tableNumber: { $in: adjacentTables },
+            tableNumber: { $in: adjacentTables }, // this fetches table with the specified numbers in adjacentTables
           });
 
           if (tables.length !== adjacentTables.length) {
@@ -241,21 +287,22 @@ export const updateTable: TypedRequestHandler<
           await Table.updateMany(
             { restaurantId, adjacentTables: oldTableNumber },
             { $pull: { adjacentTables: oldTableNumber } },
-            { session }
+            { session },
           );
         }
 
         // if adjacentTables is being updated, remove this table's number from tables that are no longer adjacent
         if (updateData.adjacentTables) {
-          const removedAdjacentTables = existingTable.adjacentTables?.filter(
-            (t) => !updateData.adjacentTables?.includes(t)
-          ) || [];
+          const removedAdjacentTables =
+            existingTable.adjacentTables?.filter(
+              (t) => !updateData.adjacentTables?.includes(t),
+            ) || [];
 
           if (removedAdjacentTables.length > 0) {
             await Table.updateMany(
               { restaurantId, tableNumber: { $in: removedAdjacentTables } },
               { $pull: { adjacentTables: oldTableNumber } },
-              { session }
+              { session },
             );
           }
         }
@@ -326,7 +373,7 @@ export const deleteTable: TypedRequestHandler<
         await Table.updateMany(
           { restaurantId, adjacentTables: existingTable.tableNumber },
           { $pull: { adjacentTables: existingTable.tableNumber } },
-          { session }
+          { session },
         );
 
         // Delete the table

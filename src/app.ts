@@ -6,6 +6,7 @@ import { globalErrorHandler } from './controllers/error.controller';
 // routes
 import accountRouter from './routes/account.routes';
 import restaurantRouter from './routes/restaurant.routes';
+import reservationRouter from './routes/reservation.routes';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.json({ limit: '10kb' }));
 
 app.use('/api/v1/accounts', accountRouter);
 app.use('/api/v1/restaurants', restaurantRouter);
+app.use('/api/v1/reservations', reservationRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
