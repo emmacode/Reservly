@@ -2,7 +2,11 @@ import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { Types } from 'mongoose';
 
 import CatchAsync from '../utils/catch-async';
-import { TypedRequestHandler } from '../types/express';
+import {
+  TypedRequest,
+  TypedRequestHandler,
+  TypedRequestQuery,
+} from '../types/express';
 import {
   CheckAvailabilityDto,
   CreateReservationDto,
@@ -17,6 +21,7 @@ import { RestaurantService } from '../service/restaurant.service';
 import { IOperatingHours, IReservation, IRestaurant } from '../types';
 import Reservation from '../models/Reservation';
 import { UserRoles } from '../utils/constants';
+import { ReservationAPIFeatures } from '../utils/reservation-features';
 
 export const validateReservation: TypedRequestHandler<
   ValidateReservationDto,
@@ -125,9 +130,19 @@ export const checkAvailability: TypedRequestHandler<
 });
 
 export const getAllReservations: TypedRequestHandler = CatchAsync(
-  async (req, res, next) => {
+  async (req: TypedRequest, res: Response, next: NextFunction) => {
     // more to work on getAllReservation - filter, sort, paginate
-    const reservations = await Reservation.find();
+    // const reservations = await Reservation.find();
+    // console.log(reservations, 'res')
+    const features = new ReservationAPIFeatures(Reservation.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields();
+    console.log(features, 'features');
+
+    const reservations = await features.query;
+    console.log(reservations, 'res');
+
     res.status(200).json({
       status: 'success',
       result: reservations.length,
