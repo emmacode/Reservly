@@ -1,4 +1,10 @@
-import { NextFunction, Request, RequestHandler, Response } from 'express';
+import {
+  NextFunction,
+  Request,
+  RequestHandler,
+  Response,
+  query,
+} from 'express';
 import { Types } from 'mongoose';
 
 import CatchAsync from '../utils/catch-async';
@@ -131,21 +137,23 @@ export const checkAvailability: TypedRequestHandler<
 
 export const getAllReservations: TypedRequestHandler = CatchAsync(
   async (req: TypedRequest, res: Response, next: NextFunction) => {
-    // more to work on getAllReservation - filter, sort, paginate
-    // const reservations = await Reservation.find();
-    // console.log(reservations, 'res')
     const features = new ReservationAPIFeatures(Reservation.find(), req.query)
       .filter()
       .sort()
-      .limitFields();
-    console.log(features, 'features');
+      .limitFields()
+      .paginate();
 
     const reservations = await features.query;
-    console.log(reservations, 'res');
+    const total = await Reservation.countDocuments();
+    const totalPages = Math.ceil(total / Number(req.query.limit));
 
     res.status(200).json({
       status: 'success',
       result: reservations.length,
+      //   total,
+      page: Number(req.query.page),
+      totalPages: totalPages,
+      limit: Number(req.query.limit),
       data: { reservations },
     });
   },

@@ -42,4 +42,14 @@ export class ReservationAPIFeatures<T> {
     }
     return this;
   }
+
+  paginate(): this {
+    const page = Number(this.queryString.page) || 1;
+    const limit = Number(this.queryString.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    this.query = this.query.skip(skip).limit(limit);
+
+    return this;
+  }
 }
