@@ -3,7 +3,6 @@ import {
   Request,
   RequestHandler,
   Response,
-  query,
 } from 'express';
 import { Types } from 'mongoose';
 
@@ -11,7 +10,6 @@ import CatchAsync from '../utils/catch-async';
 import {
   TypedRequest,
   TypedRequestHandler,
-  TypedRequestQuery,
 } from '../types/express';
 import {
   CheckAvailabilityDto,
