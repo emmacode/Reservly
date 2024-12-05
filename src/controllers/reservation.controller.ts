@@ -1,16 +1,8 @@
-import {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-} from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { Types } from 'mongoose';
 
 import CatchAsync from '../utils/catch-async';
-import {
-  TypedRequest,
-  TypedRequestHandler,
-} from '../types/express';
+import { TypedRequestHandler } from '../types/express';
 import {
   CheckAvailabilityDto,
   CreateReservationDto,
@@ -25,7 +17,6 @@ import { RestaurantService } from '../service/restaurant.service';
 import { IOperatingHours, IReservation, IRestaurant } from '../types';
 import Reservation from '../models/Reservation';
 import { UserRoles } from '../utils/constants';
-import { ReservationAPIFeatures } from '../utils/reservation-features';
 
 export const validateReservation: TypedRequestHandler<
   ValidateReservationDto,
@@ -134,24 +125,12 @@ export const checkAvailability: TypedRequestHandler<
 });
 
 export const getAllReservations: TypedRequestHandler = CatchAsync(
-  async (req: TypedRequest, res: Response, next: NextFunction) => {
-    const features = new ReservationAPIFeatures(Reservation.find(), req.query)
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate();
-
-    const reservations = await features.query;
-    const total = await Reservation.countDocuments();
-    const totalPages = Math.ceil(total / Number(req.query.limit));
-
+  async (req, res, next) => {
+    // more to work on getAllReservation - filter, sort, paginate
+    const reservations = await Reservation.find();
     res.status(200).json({
       status: 'success',
       result: reservations.length,
-      //   total,
-      page: Number(req.query.page),
-      totalPages: totalPages,
-      limit: Number(req.query.limit),
       data: { reservations },
     });
   },
