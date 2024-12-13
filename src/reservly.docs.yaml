@@ -1,0 +1,1268 @@
+openapi: 3.1.0
+info:
+  version: '1.0.0'
+  title: 'Reservly API Docs'
+  description: 'API documentation for reservation management.'
+  contact:
+    name: 'Afolabi Moyinoluwa & Osho Jahtofunmi'
+    email: 'afolabimoyinoluwa4@gmail.com'
+    url: 'https://github.com/emmacode/Reservly'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: ['admin', 'owner']
+          default: 'owner'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        verified:
+          type: boolean
+          default: false
+
+    SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+        - confirmPassword
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'johndoe@example.com'
+        password:
+          type: string
+          minLength: 8
+          example: 'StrongPassword123!'
+        confirmPassword:
+          type: string
+          minLength: 8
+          example: 'StrongPassword123!'
+        role:
+          type: string
+          enum: ['admin', 'owner']
+          default: 'owner'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'johndoe@example.com'
+        password:
+          type: string
+          example: 'StrongPassword123!'
+
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+        token:
+          type: string
+          description: 'JWT authentication token'
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+    UpdateAccountRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "User's name"
+        email:
+          type: string
+          format: email
+          description: "User's email address"
+
+    UsersResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+        result:
+          type: integer
+          description: 'Number of users'
+        data:
+          type: object
+          properties:
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'johndoe@example.com'
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - password
+        - confirmPassword
+      properties:
+        password:
+          type: string
+          minLength: 8
+          example: 'NewStrongPassword123!'
+        confirmPassword:
+          type: string
+          minLength: 8
+          example: 'NewStrongPassword123!'
+
+    Restaurant:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        ownerId:
+          type: string
+        operatingHours:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+                enum:
+                  - Monday
+                  - Tuesday
+                  - Wednesday
+                  - Thursday
+                  - Friday
+                  - Saturday
+                  - Sunday
+              openTime:
+                type: string
+                pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+              closeTime:
+                type: string
+                pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+              isOpen:
+                type: boolean
+            required:
+              - day
+              - openTime
+              - closeTime
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - name
+        - email
+        - address
+        - capacity
+        - ownerId
+        - operatingHours
+
+    Table:
+      type: object
+      properties:
+        _id:
+          type: string
+        restaurantId:
+          type: string
+        tableNumber:
+          type: string
+        capacity:
+          type: integer
+        location:
+          type: string
+        description:
+          type: string
+        adjacentTables:
+          type: array
+          items:
+            type: string
+
+    CreateRestaurantRequest:
+      type: object
+      required:
+        - name
+        - email
+        - address
+        - capacity
+        - operatingHours
+      properties:
+        name:
+          type: string
+          example: 'Delicious Diner'
+        email:
+          type: string
+          format: email
+          example: 'contact@deliciousdiner.com'
+        address:
+          type: string
+          example: '123 Main Street, Cityville'
+        capacity:
+          type: integer
+          minimum: 1
+          example: 50
+        operatingHours:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+                enum:
+                  - Monday
+                  - Tuesday
+                  - Wednesday
+                  - Thursday
+                  - Friday
+                  - Saturday
+                  - Sunday
+              openTime:
+                type: string
+                pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+                example: '09:00'
+              closeTime:
+                type: string
+                pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+                example: '22:00'
+              isOpen:
+                type: boolean
+                default: true
+            required:
+              - day
+              - openTime
+              - closeTime
+
+    UpdateRestaurantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        operatingHours:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+                enum:
+                  - Monday
+                  - Tuesday
+                  - Wednesday
+                  - Thursday
+                  - Friday
+                  - Saturday
+                  - Sunday
+              openTime:
+                type: string
+                pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+              closeTime:
+                type: string
+                pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+              isOpen:
+                type: boolean
+            required:
+              - day
+              - openTime
+              - closeTime
+
+    CreateTableRequest:
+      type: object
+      required:
+        - tableNumber
+        - capacity
+      properties:
+        tableNumber:
+          type: string
+          example: 'Table 1'
+        capacity:
+          type: integer
+          minimum: 1
+          example: 4
+        location:
+          type: string
+          example: 'Near Window'
+        description:
+          type: string
+          example: 'Cozy corner table'
+        adjacentTables:
+          type: array
+          items:
+            type: string
+          example: ['Table 2', 'Table 3']
+
+    UpdateTableRequest:
+      type: object
+      properties:
+        tableNumber:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        location:
+          type: string
+        description:
+          type: string
+        adjacentTables:
+          type: array
+          items:
+            type: string
+
+    RestaurantResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+        data:
+          $ref: '#/components/schemas/Restaurant'
+
+    RestaurantsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Restaurant'
+
+    TablesResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+
+    Reservation:
+      type: object
+      properties:
+        _id:
+          type: string
+        restaurantId:
+          type: string
+          description: Reference to the restaurant
+        date:
+          type: string
+          format: date
+          description: Date of the reservation
+        time:
+          type: string
+          format: date-time
+          description: Time of the reservation
+        firstName:
+          type: string
+          description: First name of the reservation holder
+        lastName:
+          type: string
+          description: Last name of the reservation holder
+        phone:
+          type: number
+          description: Phone number of the reservation holder
+        email:
+          type: string
+          format: email
+          description: Email of the reservation holder
+        additionalNotes:
+          type: string
+          description: Optional additional notes for the reservation
+        persons:
+          type: number
+          description: Number of persons for the reservation
+      required:
+        - restaurantId
+        - date
+        - time
+        - firstName
+        - lastName
+        - phone
+        - email
+        - persons
+
+    CreateReservationRequest:
+      type: object
+      required:
+        - reserveDate
+        - persons
+        - firstName
+        - lastName
+        - phone
+        - email
+      properties:
+        reserveDate:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+              example: '2024-01-15'
+            time:
+              type: string
+              format: 'time'
+              example: '19:30'
+        persons:
+          type: number
+          minimum: 1
+          example: 2
+        firstName:
+          type: string
+          example: 'John'
+        lastName:
+          type: string
+          example: 'Doe'
+        phone:
+          type: number
+          example: 1234567890
+        email:
+          type: string
+          format: email
+          example: 'johndoe@example.com'
+        additional_notes:
+          type: string
+          example: 'Celebrating a birthday'
+
+    UpdateReservationRequest:
+      type: object
+      properties:
+        reserveDate:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+              example: '2024-02-15'
+            time:
+              type: string
+              format: 'time'
+              example: '20:00'
+        persons:
+          type: number
+          minimum: 1
+          example: 3
+        phone:
+          type: number
+          example: 9876543210
+
+    ReservationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+        data:
+          type: object
+          properties:
+            reservation:
+              $ref: '#/components/schemas/Reservation'
+
+    ReservationsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+        result:
+          type: integer
+          description: 'Number of reservations'
+        page:
+          type: integer
+        totalPages:
+          type: integer
+        limit:
+          type: integer
+        data:
+          type: object
+          properties:
+            reservations:
+              type: array
+              items:
+                $ref: '#/components/schemas/Reservation'
+
+security:
+  - bearerAuth: []
+
+servers:
+  - url: 'http://localhost:9999/api/v1'
+    description: 'Local server'
+
+paths:
+  /accounts/signup:
+    post:
+      tags:
+        - Auth
+      summary: Create a new user account
+      description: Register a new user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad request (e.g., passwords do not match)
+        '500':
+          description: Server error or email sending failed
+
+  /accounts/login:
+    post:
+      tags:
+        - Auth
+      summary: User login
+      description: Authenticate a registered user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successfully logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing email or password
+        '401':
+          description: Incorrect email or password
+
+  /accounts/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Request password reset
+      description: Send a password reset token to user's email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Password reset token sent successfully
+        '401':
+          description: No user found with the provided email
+        '500':
+          description: Error sending email
+
+  /accounts/reset-password/{token}:
+    patch:
+      tags:
+        - Auth
+      summary: Reset user password
+      description: Reset password using a valid reset token
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password successfully reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid token, expired token, or passwords do not match
+
+  /accounts/update-password:
+    patch:
+      tags:
+        - Auth
+      summary: Update user password
+      description: Update password for logged-in user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - password
+                - confirmPassword
+              properties:
+                currentPassword:
+                  type: string
+                  description: User's current password
+                password:
+                  type: string
+                  minLength: 8
+                  description: New password
+                confirmPassword:
+                  type: string
+                  minLength: 8
+                  description: Confirm new password
+      responses:
+        '200':
+          description: Password successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Passwords do not match
+        '401':
+          description: Current password is incorrect
+
+  /accounts/verify-email/{emailToken}:
+    get:
+      tags:
+        - Auth
+      summary: Verify user email
+      description: Verify user email using the provided email verification token
+      parameters:
+        - in: path
+          name: emailToken
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email verified successfully
+        '400':
+          description: Invalid or expired token
+
+  /accounts:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve a list of all users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /accounts/update-account:
+    patch:
+      tags:
+        - Users
+      summary: Update user account
+      description: Update user account details (name or email)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountRequest'
+      responses:
+        '200':
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 'success'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      message:
+                        type: string
+                        description: 'Optional verification email message'
+        '400':
+          description: Invalid request (e.g., trying to update password)
+        '500':
+          description: Server error during account update
+
+  /accounts/delete-account:
+    delete:
+      tags:
+        - Users
+      summary: Delete user account
+      description: Delete user account and associated restaurants (owner only)
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Account successfully deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not an owner)
+
+  /restaurants:
+    get:
+      tags:
+        - Restaurant
+      summary: Get all restaurants
+      description: Retrieve a list of all restaurants
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved restaurants
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantsResponse'
+        '401':
+          description: Unauthorized access
+
+    post:
+      tags:
+        - Restaurant
+      summary: Register a new restaurant
+      description: Create a new restaurant for the authenticated user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRestaurantRequest'
+      responses:
+        '201':
+          description: Restaurant successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantResponse'
+        '400':
+          description: Bad request (e.g., duplicate restaurant, invalid data)
+        '401':
+          description: Unauthorized access
+
+  /restaurants/{restaurantId}:
+    get:
+      tags:
+        - Restaurant
+      summary: Get a single restaurant
+      description: Retrieve details of a specific restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved restaurant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantResponse'
+        '404':
+          description: Restaurant not found
+        '401':
+          description: Unauthorized access
+
+    patch:
+      tags:
+        - Restaurant
+      summary: Update restaurant details
+      description: Update details of a specific restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRestaurantRequest'
+      responses:
+        '200':
+          description: Restaurant successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantResponse'
+        '400':
+          description: Bad request (e.g., invalid data)
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden (not restaurant owner or admin)
+        '404':
+          description: Restaurant not found
+
+    delete:
+      tags:
+        - Restaurant
+      summary: Delete a restaurant
+      description: Delete a specific restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Restaurant successfully deleted
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden (not restaurant owner or admin)
+        '404':
+          description: Restaurant not found
+
+  /restaurants/{restaurantId}/tables:
+    get:
+      tags:
+        - Tables
+      summary: Get all tables for a restaurant
+      description: Retrieve a list of all tables in a specific restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved tables
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TablesResponse'
+        '401':
+          description: Unauthorized access
+        '404':
+          description: Restaurant not found
+
+    post:
+      tags:
+        - Tables
+      summary: Add a new table to a restaurant
+      description: Create a new table in a specific restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTableRequest'
+      responses:
+        '201':
+          description: Table successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          description: Bad request (e.g., duplicate table, invalid data)
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden (not restaurant owner or admin)
+        '404':
+          description: Restaurant not found
+
+  /restaurants/{restaurantId}/tables/{tableId}:
+    get:
+      tags:
+        - Tables
+      summary: Get details of a specific table
+      description: Retrieve details of a specific table in a restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: tableId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved table details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '401':
+          description: Unauthorized access
+        '404':
+          description: Restaurant or table not found
+
+    patch:
+      tags:
+        - Tables
+      summary: Update table details
+      description: Update details of a specific table in a restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: tableId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTableRequest'
+      responses:
+        '200':
+          description: Table successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          description: Bad request (e.g., invalid data)
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden (not restaurant owner or admin)
+        '404':
+          description: Restaurant or table not found
+
+    delete:
+      tags:
+        - Tables
+      summary: Delete a table
+      description: Delete a specific table from a restaurant
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: tableId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Table successfully deleted
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden (not restaurant owner or admin)
+        '404':
+          description: Restaurant or table not found
+
+  /reservations/restaurants/{restaurantId}/reservations:
+    get:
+      tags:
+        - Reservation
+      summary: Get all reservations
+      description: Retrieve a list of all reservations
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved reservations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationsResponse'
+        '401':
+          description: Unauthorized access
+
+  /reservations/restaurants/{restaurantId}/reservations/check-availability:
+    post:
+      tags:
+        - Reservation
+      summary: Check table availability
+      description: Check available time slots for a specific date
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reserveDate
+              properties:
+                reserveDate:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                      example: '2024-01-15'
+                    time:
+                      type: string
+                      format: 'time'
+                      example: '19:30'
+      responses:
+        '200':
+          description: Successfully retrieved available time slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 'success'
+                  data:
+                    type: object
+                    properties:
+                      timeslots:
+                        type: array
+                        items:
+                          type: string
+        '400':
+          description: Bad request (e.g., invalid date or time)
+        '401':
+          description: Unauthorized access
+
+  /reservations/restaurants/{restaurantId}/reservations/create-reservation:
+    post:
+      tags:
+        - Reservation
+      summary: Create a new reservation
+      description: Create a new reservation for a specific restaurant
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Reservation successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: Bad request (e.g., invalid reservation details)
+        '404':
+          description: Restaurant not found
+
+  /reservations/restaurants/{restaurantId}/reservations/{reservationId}:
+    get:
+      tags:
+        - Reservation
+      summary: Get a single reservation
+      description: Retrieve details of a specific reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: reservationId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved reservation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '401':
+          description: Unauthorized access
+        '404':
+          description: Reservation not found
+
+    patch:
+      tags:
+        - Reservation
+      summary: Update reservation details
+      description: Update details of a specific reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: reservationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReservationRequest'
+      responses:
+        '200':
+          description: Reservation successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: Bad request (e.g., invalid update data)
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden (not restaurant owner or admin)
+        '404':
+          description: Reservation not found
+
+    delete:
+      tags:
+        - Reservation
+      summary: Delete a reservation
+      description: Delete a specific reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: restaurantId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: reservationId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Reservation successfully deleted
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden (not restaurant owner or admin)
+        '404':
+          description: Reservation not found
