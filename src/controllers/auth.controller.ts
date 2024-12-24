@@ -44,9 +44,7 @@ export const createSendToken = (
   // New object without the password
   const userResponse = user.toObject();
   delete userResponse.password;
-  console.log(userResponse, 'user response');
 
-  console.log('Calling res.status');
   res.status(statusCode).json({
     status: 'success',
     token,
@@ -55,7 +53,6 @@ export const createSendToken = (
 };
 
 export const signup = CatchAsync(async (req, res, next) => {
-  console.log(req.body, 'request body');
   if (req.body.password !== req.body.confirmPassword) {
     return next(new AppError('Passwords do not match!', 400));
   }
@@ -77,7 +74,6 @@ export const signup = CatchAsync(async (req, res, next) => {
       verificationToken: token,
       req,
     });
-    console.log(newUser, 'new user');
 
     createSendToken(newUser, 201, res);
   } catch (error) {
