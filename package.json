@@ -6,7 +6,8 @@
   "scripts": {
     "build": "npx tsc",
     "dev": "nodemon src/server.ts",
-    "prod": "NODE_ENV=production nodemon src/server.ts"
+    "prod": "NODE_ENV=production nodemon src/server.ts",
+    "test": "jest --watchAll"
   },
   "keywords": [],
   "author": "Moyinoluwa Afolabi & Jahtofunmi Osho",
@@ -14,6 +15,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.8.6",
@@ -30,8 +32,10 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.2",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.7",
     "prettier": "^3.3.3",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   },

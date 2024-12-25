@@ -23,7 +23,7 @@ const signToken = (id: string) =>
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
-const createSendToken = (
+export const createSendToken = (
   user: IUser,
   statusCode: number,
   res: Response,
