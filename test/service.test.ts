@@ -11,8 +11,8 @@ describe('Reservation service', () => {
   let existingReservations: IReservationWindow[];
 
   beforeEach(() => {
-    date = '2024-12-25';
-    time = '13:30';
+    date = '2025-01-31';
+    time = '14:30';
     reservationDateTime = new Date(`${date}T${time}`);
     operatingHours = {
       day: DaysOfWeek.WEDNESDAY,
