@@ -38,4 +38,7 @@ jobs:
         touch .env
         echo "${{ secrets.PROD_ENV_FILE }}" > .env
         
-    - run: pm2 restart BackendAPI
+    - name: Start app
+      run: |
+        npm install -g pm2
+        pm2 start src/server.ts --name BackendAPI --interpreter ts-node
