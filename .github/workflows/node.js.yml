@@ -36,6 +36,7 @@ jobs:
         # Copy package files for production dependencies
         cp package.json deploy/
         cp package-lock.json deploy/
+        cp .env deploy/
         mkdir -p deploy/src
         cp src/reservly.docs.yaml deploy/src/reservly.docs.yaml
     
