@@ -10,7 +10,7 @@ on:
 jobs:
   build:
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
@@ -18,14 +18,22 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    - name: Checkout code
     - uses: actions/checkout@v4
+    
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+
+    - name: Install dependencies
     - run: npm ci
+
+    - name: Build
     - run: npm run build
+
+    - name: Create a .env file
     - run: |
         touch .env
         echo "${{ secrets.PROD_ENV_FILE }}" > .env
