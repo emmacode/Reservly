@@ -6,8 +6,8 @@
   "scripts": {
     "build": "npx tsc",
     "dev": "nodemon src/server.ts",
-    "prod": "NODE_ENV=production nodemon src/server.ts",
-    "test": "jest --watchAll"
+    "prod": "NODE_ENV=production ts-node src/server.ts",
+    "test": "jest"
   },
   "keywords": [],
   "author": "Moyinoluwa Afolabi & Jahtofunmi Osho",
