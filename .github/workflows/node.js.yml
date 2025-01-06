@@ -36,6 +36,8 @@ jobs:
         # Copy package files for production dependencies
         cp package.json deploy/
         cp package-lock.json deploy/
+        mkdir -p deploy/src
+        cp src/reservly.docs.yaml deploy/src/reservly.docs.yaml
     
     - name: Copy files to EC2
       uses: appleboy/scp-action@master
