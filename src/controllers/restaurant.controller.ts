@@ -41,7 +41,7 @@ export const registerResturant: TypedRequestHandler<
       const uniqueDays = new Set(days);
       if (uniqueDays.size !== days.length) {
         throw new AppError(
-          'Duplicate days in operating hours are not allowed',
+          'Duplicate day in a week is not allowed',
           400,
         );
       }
