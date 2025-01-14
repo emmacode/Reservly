@@ -1,16 +1,8 @@
-import {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-} from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { Types } from 'mongoose';
 
 import CatchAsync from '../utils/catch-async';
-import {
-  TypedRequest,
-  TypedRequestHandler,
-} from '../types/express';
+import { TypedRequest, TypedRequestHandler } from '../types/express';
 import {
   CheckAvailabilityDto,
   CreateReservationDto,
@@ -46,7 +38,7 @@ export const validateReservation: TypedRequestHandler<
   }
 
   // we want to check the openTime and closeTime of the restaurant for the particular day user is reserving for
-  const requestedDay = new Date()
+  const requestedDay = reservationDateTime
     .toLocaleDateString('en-US', { weekday: 'long' })
     .toUpperCase();
 
