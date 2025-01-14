@@ -95,10 +95,11 @@ export const checkAvailability: TypedRequestHandler<
   const {
     reserveDate: { date, time },
   } = req.body;
+  const reservationDateTime = new Date(`${date}T${time}`);
 
   const restaurant = (await Restaurant.findById(restaurantId)) as IRestaurant;
 
-  const requestedDay = new Date()
+  const requestedDay = reservationDateTime
     .toLocaleDateString('en-US', { weekday: 'long' })
     .toUpperCase();
 
